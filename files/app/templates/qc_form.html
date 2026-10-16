@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Record QC · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Record a QC run</h1>
+    <p class="lede">Use the manufacturer mean and SD for the control lot. The decision is calculated when you save.</p>
+  </div>
+</section>
+<form class="panel form-grid" method="post">
+  <label class="wide">Fill from the test catalog
+    <select id="catalog-pick">
+      <option value="">Optional</option>
+      {% for test in catalog %}
+      <option value="{{ test.test_code }}|{{ test.test_name }}|{{ test.unit }}">{{ test.test_name }} ({{ test.test_code }})</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Test code
+    <input id="test_code_input" name="test_code" value="{{ item.test_code }}" required>
+  </label>
+  <label>Test name
+    <input id="test_name_input" name="test_name" value="{{ item.test_name }}" required>
+  </label>
+  <label>Control level
+    <select name="control_level">
+      {% for name in ["Level 1", "Level 2", "Level 3"] %}
+      <option value="{{ name }}" {% if item.control_level == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Lot number
+    <input name="lot_number" value="{{ item.lot_number }}">
+  </label>
+  <label>Instrument
+    <input name="instrument" value="{{ item.instrument }}">
+  </label>
+  <label>Operator
+    <input name="operator_name" value="{{ item.operator_name }}">
+  </label>
+  <label>Expected mean
+    <input name="expected_mean" required inputmode="decimal" value="{{ item.expected_mean or '' }}">
+  </label>
+  <label>Expected SD
+    <input name="expected_sd" required inputmode="decimal" value="{{ item.expected_sd or '' }}">
+  </label>
+  <label>Observed value
+    <input name="observed_value" required inputmode="decimal">
+  </label>
+  <label>Unit
+    <input id="unit_input" name="unit" value="{{ item.unit }}">
+  </label>
+  <label>Run date
+    <input type="date" name="run_on" value="{{ item.run_on }}" required>
+  </label>
+  <label class="wide">Notes
+    <textarea name="notes">{{ item.notes }}</textarea>
+  </label>
+  <div class="wide actions">
+    <button class="primary" type="submit">Save QC run</button>
+    <a class="button secondary" href="{{ url_for('qc_list') }}">Back</a>
+  </div>
+</form>
+{% endblock %}

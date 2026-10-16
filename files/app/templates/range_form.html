@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="lede">One entry per test and species. Registrations keep the range, interpretation, and rate that applied when they were made.</p>
+  </div>
+</section>
+<form class="panel form-grid" method="post" action="{{ action }}">
+  <label>Test name
+    <input name="test_name" value="{{ item.test_name }}" required autofocus>
+  </label>
+  <label>Short name
+    <input name="test_code" value="{{ item.test_code }}" required placeholder="SGPT">
+  </label>
+  <label>Species
+    <select name="species" data-other-select="species-other" required>
+      {% for name in species_list %}
+      <option value="{{ name }}" {% if item.species == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+      <option value="Other" {% if item.species and item.species not in species_list %}selected{% endif %}>Other</option>
+    </select>
+  </label>
+  <label>Department
+    <input name="department" value="{{ item.department or '' }}" placeholder="Chemistry">
+  </label>
+  <label class="wide" id="species-other" {% if not item.species or item.species in species_list %}hidden{% endif %}>Species name
+    <input name="species_other" value="{% if item.species and item.species not in species_list %}{{ item.species }}{% endif %}">
+  </label>
+  <div class="pair">
+    <label>Normal range: low
+      <input name="low_value" value="{{ '' if item.low_value is none else item.low_value }}" inputmode="decimal">
+    </label>
+    <label>High
+      <input name="high_value" value="{{ '' if item.high_value is none else item.high_value }}" inputmode="decimal">
+    </label>
+  </div>
+  {% set unit_known = not item.unit or item.unit in units %}
+  <label>Unit
+    <select name="unit" data-other-select="unit-other" required>
+      <option value="">Select</option>
+      {% for name in units %}
+      <option value="{{ name }}" {% if item.unit == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+      <option value="Other" {% if not unit_known %}selected{% endif %}>Other</option>
+    </select>
+  </label>
+  <label class="wide" id="unit-other" {% if unit_known %}hidden{% endif %}>Unit name
+    <input name="unit_other" value="{% if not unit_known %}{{ item.unit }}{% endif %}">
+  </label>
+  <label class="wide">Interpretation
+    <textarea name="interpretation" placeholder="Printed beside the result on the report">{{ item.interpretation or '' }}</textarea>
+  </label>
+  <label>Rate (₹ INR)
+    <input name="rate" value="{{ '' if item.rate in (none, '') else item.rate|trimnum }}" inputmode="decimal" placeholder="0">
+  </label>
+  <label>Notes
+    <input name="notes" value="{{ item.notes or '' }}">
+  </label>
+  <div class="wide actions">
+    <button class="primary" type="submit">Save test</button>
+    <a class="button secondary" href="{{ url_for('ranges') }}">Back</a>
+  </div>
+</form>
+{% endblock %}

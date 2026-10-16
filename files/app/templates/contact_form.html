@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ info.singular }} · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>{% if contact_id %}Edit{% else %}Add{% endif %} {{ info.singular|lower }}</h1>
+    {% if contact_id %}<p class="lede">Renaming also updates earlier registrations, so reports stay together.</p>{% endif %}
+  </div>
+</section>
+<form class="panel form-grid" method="post">
+  <label class="wide">Name
+    <input name="name" value="{{ item.name }}" required autofocus>
+  </label>
+  <label class="wide">Address
+    <textarea name="address">{{ item.address or '' }}</textarea>
+  </label>
+  <label>Mobile
+    <input name="mobile" value="{{ item.mobile or '' }}" inputmode="tel">
+  </label>
+  <label>Email
+    <input name="email" type="email" value="{{ item.email or '' }}">
+  </label>
+  <div class="wide actions">
+    <button class="primary" type="submit">Save</button>
+    <a class="button secondary" href="{{ url_for('contacts', kind=info.kind) }}">Back</a>
+  </div>
+</form>
+{% endblock %}

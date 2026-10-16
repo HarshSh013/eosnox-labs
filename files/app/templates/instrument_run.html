@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{{ run.instrument_name }} result · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>{{ run.instrument_name }} {{ "QC run" if run.kind == "qc" else "result" }}</h1>
+    <p class="lede">Stored exactly as received on {{ run.received_at }}. Nothing on this page can be edited.</p>
+  </div>
+  <div class="actions">
+    <a class="button secondary" href="{{ url_for('instrument_qc') if run.kind == 'qc' else url_for('instrument_inbox') }}">Back</a>
+  </div>
+</section>
+
+<section class="split">
+  <div class="panel">
+    <h2>Received details</h2>
+    <dl class="pairs">
+      {% for key, value in run.header|dictsort %}
+      {% if value not in ("", None, [], {}) and key not in ("provisional", "unmapped", "to_confirm", "histograms", "kind") %}
+      <dt>{{ key|replace("_", " ")|capitalize }}</dt><dd>{{ value }}</dd>
+      {% endif %}
+      {% endfor %}
+      {% if run.header.to_confirm %}<dt>Not yet identified</dt><dd>{{ run.header.to_confirm }}</dd>{% endif %}
+      <dt>Raw capture</dt><dd>{{ run.raw_file or "—" }}</dd>
+    </dl>
+  </div>
+  <aside class="panel">
+    <h2>Registration</h2>
+    {% if run.kind == "qc" %}
+    <p class="meta">QC runs are not linked to registrations. Record them from <a href="{{ url_for('instrument_qc') }}">QC from analyzers</a>.</p>
+    {% elif run.sample_id %}
+    <p>Linked to <a href="{{ url_for('sample_detail', sample_id=run.sample_id) }}">{{ run.accession_no }}</a>
+      <span class="meta">({{ "matched by HR no. typed on the analyzer" if run.link_method == "auto" else "linked by " ~ (run.linked_by or "staff") }}, {{ run.linked_at }})</span></p>
+    <form method="post" action="{{ url_for('instrument_inbox') }}">
+      <input type="hidden" name="action" value="unlink">
+      <input type="hidden" name="run_id" value="{{ run.id }}">
+      <input type="hidden" name="next" value="{{ url_for('instrument_run', run_id=run.id) }}">
+      <button class="secondary" type="submit">Unlink</button>
+    </form>
+    {% else %}
+    <p class="meta">Not linked. {% if run.patient_ref %}Typed on the analyzer: <strong>{{ run.patient_ref }}</strong>, which matches no single registration.{% else %}No HR number was typed on the analyzer.{% endif %}</p>
+    <datalist id="registrations">
+      {% for s in samples %}<option value="{{ s.accession_no }}">{{ s.animal_name }} · {{ s.species }} · {{ s.collected_on }}</option>{% endfor %}
+    </datalist>
+    <form method="post" action="{{ url_for('instrument_inbox') }}" class="link-form">
+      <input type="hidden" name="action" value="link">
+      <input type="hidden" name="run_id" value="{{ run.id }}">
+      <input type="hidden" name="next" value="{{ url_for('instrument_run', run_id=run.id) }}">
+      <input name="accession_no" list="registrations" placeholder="HR no." required>
+      <button class="primary" type="submit">Link</button>
+    </form>
+    {% endif %}
+  </aside>
+</section>
+
+<section class="panel">
+  <h2>Values</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Code</th><th>Name</th><th>Value</th><th>Unit</th><th>{{ "Target ± limit" if run.kind == "qc" else "Range" }}</th><th>Flag</th></tr></thead>
+      <tbody>
+        {% for v in run["values"] %}
+        <tr>
+          <td class="meta">{{ v.seq }}</td>
+          <td>{{ v.code }}</td>
+          <td>{{ v.name or "" }}</td>
+          <td class="{{ 'out-high' if v.flag == 'H' else 'out-low' if v.flag == 'L' else '' }}">{{ v.value_text }}</td>
+          <td>{{ v.unit or "—" }}</td>
+          <td>{{ v.range_text or "—" }}</td>
+          <td>{{ {"H": "High", "L": "Low"}.get(v.flag, "") }}{% if v.flag and v.flag_source == "analyzer range" %} <span class="meta">(vs analyzer range)</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if run.images %}
+  <div class="histograms">
+    {% for image in run.images %}
+    <figure><img src="{{ url_for('instrument_image', image_id=image.id) }}" alt="{{ image.name }} histogram"><figcaption>{{ image.name }}</figcaption></figure>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

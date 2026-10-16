@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}New registration · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>New registration</h1>
+    <p class="lede">Only tests set up for the chosen species are listed. A profile adds its tests to the report and its rate to the bill.</p>
+  </div>
+</section>
+
+<form method="post" action="{{ url_for('registration_new') }}" id="registration">
+  {% if patient_id %}<input type="hidden" name="patient_id" value="{{ patient_id }}">{% endif %}
+  <section class="panel form-grid three">
+    <label>Date
+      <input type="date" name="collected_on" value="{{ item.collected_on }}" required>
+    </label>
+    <label>HR No.
+      <input value="{{ next_hr }} (assigned on save)" readonly tabindex="-1" class="readonly">
+    </label>
+    <span></span>
+
+    <label>Patient name
+      <input name="animal_name" value="{{ item.animal_name }}" required autofocus>
+    </label>
+    <div class="pair">
+      <label>Age
+        <input name="age" value="{{ item.age }}" inputmode="decimal">
+      </label>
+      <label>&nbsp;
+        <select name="age_unit" aria-label="Age unit">
+          {% for name in age_units %}
+          <option value="{{ name }}" {% if item.age_unit == name %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <label>Species
+      <select name="species" id="species" data-other-select="species-other" required>
+        {% for name in species_list %}
+        <option value="{{ name }}" {% if item.species == name %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+        <option value="Other" {% if item.species and item.species not in species_list %}selected{% endif %}>Other</option>
+      </select>
+    </label>
+    <label class="wide" id="species-other" {% if not item.species or item.species in species_list %}hidden{% endif %}>Species name
+      <input name="species_other" value="{% if item.species and item.species not in species_list %}{{ item.species }}{% endif %}">
+    </label>
+
+    <label>Owner name
+      <input name="owner_name" value="{{ item.owner_name }}">
+    </label>
+    <label>Sex
+      <select name="sex">
+        {% for name in sexes %}
+        <option value="{{ name }}" {% if item.sex == name %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <span></span>
+
+    <label>Ref. by doctor
+      <select name="referring_doctor">
+        <option value="">None / self</option>
+        {% set doctor_names = doctors|map(attribute='name')|list %}
+        {% if item.referring_doctor and item.referring_doctor not in doctor_names %}
+        <option value="{{ item.referring_doctor }}" selected>{{ item.referring_doctor }}</option>
+        {% endif %}
+        {% for row in doctors %}
+        <option value="{{ row.name }}" {% if item.referring_doctor == row.name %}selected{% endif %}>{{ row.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Mobile
+      <input name="whatsapp_no" value="{{ item.whatsapp_no }}" inputmode="tel" placeholder="10-digit mobile">
+    </label>
+    <span class="meta hint"><a href="{{ url_for('contact_form', kind='doctors') }}">Add a doctor</a></span>
+
+    <label>Ref. by hospital
+      <select name="hospital_name">
+        <option value="">None</option>
+        {% set hospital_names = hospitals|map(attribute='name')|list %}
+        {% if item.hospital_name and item.hospital_name not in hospital_names %}
+        <option value="{{ item.hospital_name }}" selected>{{ item.hospital_name }}</option>
+        {% endif %}
+        {% for row in hospitals %}
+        <option value="{{ row.name }}" {% if item.hospital_name == row.name %}selected{% endif %}>{{ row.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Email
+      <input name="email" type="email" value="{{ item.email }}">
+    </label>
+    <span class="meta hint"><a href="{{ url_for('contact_form', kind='hospitals') }}">Add a hospital</a></span>
+  </section>
+
+  <section class="split">
+    <div class="panel">
+      <h2>Test selection</h2>
+      <p class="meta" id="no-tests" hidden>No tests are set up for this species yet. Add them in Master, Test creation.</p>
+      <div class="pick-list" id="test-list">
+        {% for test in tests %}
+        <label class="pick" data-species="{{ test.species }}" data-code="{{ test.test_code }}">
+          <input type="checkbox" name="test_ids" value="{{ test.id }}" data-rate="{{ test.rate }}" {% if test.id in selected_tests %}checked{% endif %}>
+          <span>{{ test.test_name }} <span class="meta">{{ test.test_code }}{% if test.department %} · {{ test.department }}{% endif %}</span></span>
+          <span class="amt">{{ test.rate|money }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Profile selection</h2>
+      {% if profiles %}
+      <div class="pick-list">
+        {% for profile in profiles %}
+        <label class="pick">
+          <input type="checkbox" name="panel_ids" value="{{ profile.panel.id }}" data-rate="{{ profile.panel.rate }}" data-codes="{{ profile.codes|join(',') }}" {% if profile.panel.id in selected_profiles %}checked{% endif %}>
+          <span>{{ profile.panel.name }} <span class="meta">{{ profile.codes|join(', ') }}</span></span>
+          <span class="amt">{{ profile.panel.rate|money }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty">No profiles yet. Create them in Master, Profile creation.</p>
+      {% endif %}
+      <p class="meta" id="overlap" hidden></p>
+    </div>
+  </section>
+
+  <section class="panel billing">
+    <div class="bill-grid">
+      <label>Total amount (₹)
+        <input id="total" value="0.00" readonly tabindex="-1" class="readonly">
+      </label>
+      <label>Discount (₹)
+        <input name="discount" id="discount" value="{{ item.discount }}" inputmode="decimal" placeholder="0">
+      </label>
+      <label>Net amount (₹)
+        <input id="net" value="0.00" readonly tabindex="-1" class="readonly strong">
+      </label>
+      <label>Cash / UPI / Credit
+        <select name="payment_mode" id="mode">
+          {% for name in modes %}
+          <option value="{{ name }}" {% if item.payment_mode == name %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Amount received (₹)
+        <input name="received" id="received" value="{{ item.received }}" inputmode="decimal">
+      </label>
+      <label>Due amount (₹)
+        <input id="due" value="0.00" readonly tabindex="-1" class="readonly strong">
+      </label>
+    </div>
+    <div class="actions" style="margin-top: 1rem;">
+      <button class="primary" type="submit">Save &amp; print bill</button>
+      <a class="button secondary" href="{{ url_for('samples') }}">Cancel</a>
+    </div>
+  </section>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var species = document.getElementById("species");
+    var speciesOther = document.querySelector("input[name=species_other]");
+    var tests = Array.prototype.slice.call(document.querySelectorAll("#test-list .pick"));
+    var profiles = Array.prototype.slice.call(document.querySelectorAll("input[name=panel_ids]"));
+    var discount = document.getElementById("discount");
+    var received = document.getElementById("received");
+    var mode = document.getElementById("mode");
+    var receivedTouched = received.value !== "";
+
+    function num(value) {
+      var n = parseFloat(value);
+      return isNaN(n) ? 0 : n;
+    }
+    function fmt(n) { return n.toFixed(2); }
+    function currentSpecies() {
+      return species.value === "Other" ? (speciesOther.value || "").trim() : species.value;
+    }
+
+    function filterTests() {
+      var chosen = currentSpecies();
+      var shown = 0;
+      tests.forEach(function (row) {
+        var match = row.dataset.species === chosen;
+        row.hidden = !match;
+        if (!match) row.querySelector("input").checked = false;
+        if (match) shown += 1;
+      });
+      document.getElementById("no-tests").hidden = shown > 0;
+    }
+
+    function recalc() {
+      var total = 0;
+      var inProfiles = {};
+      profiles.forEach(function (box) {
+        if (!box.checked) return;
+        total += num(box.dataset.rate);
+        (box.dataset.codes || "").split(",").forEach(function (code) { inProfiles[code] = true; });
+      });
+      var overlap = [];
+      tests.forEach(function (row) {
+        var box = row.querySelector("input");
+        if (!box.checked) return;
+        if (inProfiles[row.dataset.code]) {
+          overlap.push(row.dataset.code);
+        } else {
+          total += num(box.dataset.rate);
+        }
+      });
+      var note = document.getElementById("overlap");
+      note.hidden = overlap.length === 0;
+      note.textContent = overlap.length ? "Already in a selected profile, not charged again: " + overlap.join(", ") + "." : "";
+
+      var net = Math.max(total - num(discount.value), 0);
+      if (mode.value === "Credit") {
+        received.value = "";
+        received.disabled = true;
+      } else {
+        received.disabled = false;
+        if (!receivedTouched) received.value = net ? fmt(net) : "";
+      }
+      var paid = mode.value === "Credit" ? 0 : num(received.value);
+      document.getElementById("total").value = fmt(total);
+      document.getElementById("net").value = fmt(net);
+      document.getElementById("due").value = fmt(Math.max(net - paid, 0));
+    }
+
+    species.addEventListener("change", function () { filterTests(); recalc(); });
+    if (speciesOther) speciesOther.addEventListener("input", function () { filterTests(); recalc(); });
+    document.getElementById("registration").addEventListener("change", recalc);
+    discount.addEventListener("input", recalc);
+    received.addEventListener("input", function () { receivedTouched = true; recalc(); });
+    filterTests();
+    recalc();
+  })();
+</script>
+{% endblock %}

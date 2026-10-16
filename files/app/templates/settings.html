@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Settings · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Laboratory details</h1>
+    <p class="lede">These details print on patient reports and QC reports.</p>
+  </div>
+</section>
+<form class="panel form-grid" method="post">
+  <label>Laboratory name
+    <input name="lab_name" value="{{ settings.lab_name }}" required>
+  </label>
+  <label>Tagline
+    <input name="lab_tagline" value="{{ settings.lab_tagline }}">
+  </label>
+  <label class="wide">Address
+    <textarea name="lab_address">{{ settings.lab_address }}</textarea>
+  </label>
+  <label>Phone
+    <input name="lab_phone" value="{{ settings.lab_phone }}">
+  </label>
+  <label>Laboratory email
+    <input name="lab_email" type="email" value="{{ settings.lab_email }}">
+  </label>
+  <div class="wide"><button class="primary" type="submit">Save details</button></div>
+</form>
+
+<form class="panel form-grid" method="post">
+  <input type="hidden" name="action" value="report_layout">
+  <h2 class="wide">Report layout</h2>
+  <p class="meta wide">The printed report uses the laboratory details above as its header. Add a line under them, the footer, and the two signature labels here.</p>
+  <label class="wide">Header note
+    <input name="report_header_note" value="{{ settings.report_header_note }}" placeholder="NABL / registration number, timings, website">
+  </label>
+  <label class="wide">Footer
+    <textarea name="report_footer" placeholder="Disclaimer printed at the bottom of every report">{{ settings.report_footer }}</textarea>
+  </label>
+  <label>Left signature
+    <input name="report_sign_left" value="{{ settings.report_sign_left }}" placeholder="Technician">
+  </label>
+  <label>Right signature
+    <input name="report_sign_right" value="{{ settings.report_sign_right }}" placeholder="Pathologist">
+  </label>
+  <label class="wide check"><input type="checkbox" name="report_show_histograms" value="1" {% if settings.report_show_histograms == '1' %}checked{% endif %}> Print analyzer histograms (H33 WBC, RBC, PLT)</label>
+  <div class="wide"><button class="primary" type="submit">Save report layout</button></div>
+</form>
+
+<form class="panel form-grid" method="post">
+  <input type="hidden" name="action" value="password">
+  <h2 class="wide">Change password</h2>
+  <label class="wide">Current password
+    <input name="current_password" type="password" autocomplete="current-password" required>
+  </label>
+  <label>New password
+    <input name="new_password" type="password" autocomplete="new-password" required minlength="4">
+  </label>
+  <label>Confirm new password
+    <input name="confirm_password" type="password" autocomplete="new-password" required minlength="4">
+  </label>
+  <div class="wide"><button class="primary" type="submit">Change password</button></div>
+</form>
+{% endblock %}

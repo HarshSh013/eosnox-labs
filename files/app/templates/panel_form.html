@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="lede">Tick the tests in this profile. The profile rate is charged once, whatever the tests cost individually. Species ranges are applied when the profile is registered.</p>
+  </div>
+</section>
+<form class="panel form-grid" method="post" action="{{ action }}">
+  <label>Profile name
+    <input name="name" value="{{ panel.name }}" required placeholder="Liver function test">
+  </label>
+  <label>Rate (₹ INR)
+    <input name="rate" value="{{ '' if panel.rate in (none, '') else panel.rate|trimnum }}" inputmode="decimal" placeholder="0">
+  </label>
+  <label>Department
+    <input name="department" value="{{ panel.department or '' }}" placeholder="Chemistry">
+  </label>
+  <label>Notes
+    <input name="notes" value="{{ panel.notes or '' }}">
+  </label>
+  <fieldset class="wide checks">
+    <legend>Test selection</legend>
+    {% for test in catalog %}
+    <label>
+      <input type="checkbox" name="test_codes" value="{{ test.test_code }}" {% if test.test_code in selected %}checked{% endif %}>
+      {{ test.test_name }} ({{ test.test_code }}){% if test.department %} · {{ test.department }}{% endif %}
+    </label>
+    {% endfor %}
+  </fieldset>
+  <div class="wide actions">
+    <button class="primary" type="submit">Save profile</button>
+    <a class="button secondary" href="{{ url_for('panels') }}">Back</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Tests · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Test creation</h1>
+    <p class="lede">Each test is set up per species with its normal range, unit, interpretation, and rate. Results are flagged high or low against the range for the animal’s species.</p>
+  </div>
+  <a class="button" href="{{ url_for('range_new') }}">Create test</a>
+</section>
+
+<form class="filters" method="get">
+  <label>Search test
+    <input name="q" value="{{ q }}" placeholder="Code, name, or department">
+  </label>
+  <label>Species
+    <select name="species">
+      <option value="">All</option>
+      {% for name in species_options %}
+      <option value="{{ name }}" {% if species == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button class="primary" type="submit">Filter</button>
+</form>
+
+<section class="panel">
+  {% if ranges %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Species</th>
+          <th>Department</th>
+          <th>Normal range</th>
+          <th>Unit</th>
+          <th class="num">Rate (₹)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in ranges %}
+        <tr>
+          <td><a href="{{ url_for('range_edit', range_id=item.id) }}">{{ item.test_code }}</a><br>{{ item.test_name }}</td>
+          <td>{{ item.species }}</td>
+          <td>{{ item.department or "—" }}</td>
+          <td>{{ item.low_value|rangelabel(item.high_value) }}</td>
+          <td>{{ item.unit }}</td>
+          <td class="num">{{ item.rate|money }}</td>
+          <td>
+            <form method="post" action="{{ url_for('range_delete', range_id=item.id) }}" onsubmit="return confirm('Remove this test?');">
+              <button class="warn" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No tests match this filter.</p>
+  {% endif %}
+</section>
+{% endblock %}

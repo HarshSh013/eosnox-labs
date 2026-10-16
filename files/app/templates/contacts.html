@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ info.plural }} · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>{{ info.plural }}</h1>
+    <p class="lede">Names here appear in the registration form and in the referral reports.</p>
+  </div>
+  <a class="button" href="{{ url_for('contact_form', kind=info.kind) }}">Add {{ info.singular|lower }}</a>
+</section>
+
+<section class="panel">
+  {% if rows %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Address</th>
+          <th>Mobile</th>
+          <th>Email</th>
+          <th class="num">Registrations</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td><a href="{{ url_for('contact_form', kind=info.kind, contact_id=row.id) }}">{{ row.name }}</a></td>
+          <td>{{ row.address or "—" }}</td>
+          <td>{{ row.mobile or "—" }}</td>
+          <td>{{ row.email or "—" }}</td>
+          <td class="num">{{ row.registrations }}</td>
+          <td>
+            <form method="post" action="{{ url_for('contact_delete', kind=info.kind, contact_id=row.id) }}" onsubmit="return confirm('Remove this entry from the list?');">
+              <button class="warn" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No {{ info.plural|lower }} yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

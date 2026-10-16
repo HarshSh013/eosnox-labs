@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="lede">Patient type and species decide which normal range is used when results are entered.</p>
+  </div>
+</section>
+<form class="panel form-grid" method="post" action="{{ action }}">
+  <label>Animal name
+    <input name="animal_name" value="{{ patient.animal_name }}" required>
+  </label>
+  <label>Owner name
+    <input name="owner_name" value="{{ patient.owner_name or '' }}">
+  </label>
+  <label>Patient type
+    <select name="patient_type" required>
+      {% for name in patient_types %}
+      <option value="{{ name }}" {% if patient.patient_type == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Species
+    <select name="species" data-other-select="species-other" required>
+      {% for name in species_list %}
+      <option value="{{ name }}" {% if patient.species == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+      <option value="Other" {% if patient.species and patient.species not in species_list %}selected{% endif %}>Other</option>
+    </select>
+  </label>
+  <label class="wide" id="species-other" {% if not patient.species or patient.species in species_list %}hidden{% endif %}>Species name
+    <input name="species_other" value="{% if patient.species and patient.species not in species_list %}{{ patient.species }}{% endif %}" placeholder="Enter species">
+  </label>
+  <label>Breed
+    <input name="breed" value="{{ patient.breed or '' }}">
+  </label>
+  <label>Sex
+    <select name="sex">
+      {% for name in sexes %}
+      <option value="{{ name }}" {% if patient.sex == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Age
+    <input name="age" value="{{ patient.age or '' }}" inputmode="decimal">
+  </label>
+  <label>Age unit
+    <select name="age_unit">
+      {% for name in age_units %}
+      <option value="{{ name }}" {% if patient.age_unit == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Mobile (WhatsApp)
+    <input name="whatsapp_no" value="{{ patient.whatsapp_no or '' }}" placeholder="10-digit mobile or with country code">
+  </label>
+  <label>Email
+    <input name="email" type="email" value="{{ patient.email or '' }}" placeholder="owner@clinic.com">
+  </label>
+  <label>Referring doctor
+    <input name="referring_doctor" list="doctors" value="{{ patient.referring_doctor or '' }}">
+  </label>
+  <label>Hospital name
+    <input name="hospital_name" list="hospitals" value="{{ patient.hospital_name or '' }}">
+  </label>
+  <datalist id="doctors">
+    {% for name in doctors %}<option value="{{ name }}">{% endfor %}
+  </datalist>
+  <datalist id="hospitals">
+    {% for name in hospitals %}<option value="{{ name }}">{% endfor %}
+  </datalist>
+  <div class="wide actions">
+    <button class="primary" type="submit">Save patient</button>
+    <a class="button secondary" href="{{ url_for('patients') }}">Back</a>
+  </div>
+</form>
+{% if patient_id is defined %}
+<form class="panel" method="post" action="{{ url_for('patient_delete', patient_id=patient_id) }}" onsubmit="return confirm('Remove this patient?');">
+  <button class="warn" type="submit">Delete patient</button>
+</form>
+{% endif %}
+{% endblock %}

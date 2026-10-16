@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}QC report · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head no-print">
+  <div>
+    <h1>QC report</h1>
+    <p class="lede">Review control runs for a date window, then print the sheet.</p>
+  </div>
+  <button class="button" type="button" onclick="window.print()">Print</button>
+</section>
+
+<form class="filters no-print" method="get">
+  <label>From
+    <input type="date" name="from" value="{{ date_from }}">
+  </label>
+  <label>To
+    <input type="date" name="to" value="{{ date_to }}">
+  </label>
+  <button class="primary" type="submit">Update</button>
+</form>
+
+<article class="report-sheet">
+  <header class="report-banner">
+    <div>
+      <p class="report-kicker">Quality control report</p>
+      <h1>{{ settings.lab_name }}</h1>
+      <p class="meta">{{ date_from }} to {{ date_to }}</p>
+    </div>
+  </header>
+  <section class="summary">
+    <article class="stat"><span>Runs</span><strong>{{ total }}</strong></article>
+    <article class="stat"><span>Accept</span><strong>{{ accepted }}</strong></article>
+    <article class="stat"><span>Warning</span><strong>{{ warnings }}</strong></article>
+    <article class="stat"><span>Reject</span><strong>{{ rejected }}</strong></article>
+  </section>
+  {% if runs %}
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Test</th>
+        <th>Level</th>
+        <th>Lot</th>
+        <th>Observed</th>
+        <th>Mean</th>
+        <th>SD</th>
+        <th>z</th>
+        <th>Decision</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td>{{ run.run_on }}</td>
+        <td>{{ run.test_name }} ({{ run.test_code }})</td>
+        <td>{{ run.control_level }}</td>
+        <td>{{ run.lot_number or "—" }}</td>
+        <td>{{ run.observed_value|trimnum }} {{ run.unit or '' }}</td>
+        <td>{{ run.expected_mean|trimnum }}</td>
+        <td>{{ run.expected_sd|trimnum }}</td>
+        <td>{{ run.z_score|trimnum }}</td>
+        <td>{{ run.status }}{% if run.notes %}<br><span class="meta">{{ run.notes }}</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No QC runs in this window.</p>
+  {% endif %}
+  <p class="foot-note">Accept is within 2 SD of the lot mean. Warning is between 2 and 3 SD. Reject is beyond 3 SD. Investigate rejected runs before releasing patient results for that test.</p>
+</article>
+{% endblock %}

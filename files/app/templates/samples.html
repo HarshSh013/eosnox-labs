@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Registrations · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Registrations</h1>
+    <p class="lede">Open a registration to enter results, take a payment, or print the report.</p>
+  </div>
+  <a class="button" href="{{ url_for('registration_new') }}">New registration</a>
+</section>
+
+<form class="filters" method="get">
+  <label>Search
+    <input name="q" value="{{ q }}" placeholder="HR No., patient, owner, doctor, hospital">
+  </label>
+  <label>Status
+    <select name="status">
+      <option value="">All</option>
+      {% for name in statuses %}
+      <option value="{{ name }}" {% if status == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button class="primary" type="submit">Filter</button>
+</form>
+
+<section class="panel">
+  {% if samples %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>HR No.</th>
+          <th>Date</th>
+          <th>Patient</th>
+          <th>Type / species</th>
+          <th>Referring doctor</th>
+          <th>Hospital</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sample in samples %}
+        <tr>
+          <td><a href="{{ url_for('sample_detail', sample_id=sample.id) }}">{{ sample.accession_no }}</a></td>
+          <td>{{ sample.collected_on }}</td>
+          <td>{{ sample.animal_name }}<br><span class="meta">{{ sample.owner_name }}</span></td>
+          <td>{{ sample.patient_type }} · {{ sample.species }}</td>
+          <td>{{ sample.referring_doctor or "—" }}</td>
+          <td>{{ sample.hospital_name or "—" }}</td>
+          <td><span class="badge {{ 'reported' if sample.status == 'Reported' else 'progress' if sample.status == 'In progress' else '' }}">{{ sample.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No registrations match.</p>
+  {% endif %}
+</section>
+{% endblock %}

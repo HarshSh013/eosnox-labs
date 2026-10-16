@@ -1,0 +1,55 @@
+{% if rows %}
+<div class="table-wrap">
+  <table class="compact">
+    <thead>
+      <tr>
+        <th>S.No.</th>
+        <th>Date</th>
+        <th>HR No.</th>
+        <th>Patient</th>
+        <th>Species</th>
+        <th>Ref. doctor</th>
+        <th>Ref. hospital</th>
+        <th class="num">Tests</th>
+        <th class="num">Total</th>
+        <th class="num">Discount</th>
+        <th class="num">Net</th>
+        <th class="num">Received</th>
+        <th class="num">Due</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ row.collected_on }}</td>
+        <td><a href="{{ url_for('sample_detail', sample_id=row.id) }}">{{ row.accession_no }}</a></td>
+        <td>{{ row.animal_name }}</td>
+        <td>{{ row.species }}</td>
+        <td>{{ row.referring_doctor or "—" }}</td>
+        <td>{{ row.hospital_name or "—" }}</td>
+        <td class="num">{{ row.tests }}</td>
+        <td class="num">{{ row.total|money }}</td>
+        <td class="num">{{ row.discount|money }}</td>
+        <td class="num">{{ row.net|money }}</td>
+        <td class="num">{{ row.paid|money }}</td>
+        <td class="num">{{ row.due|money }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr class="strong">
+        <td colspan="7">Total, {{ totals.count }} registrations</td>
+        <td class="num">{{ totals.tests }}</td>
+        <td class="num">{{ totals.total|money }}</td>
+        <td class="num">{{ totals.discount|money }}</td>
+        <td class="num">{{ totals.net|money }}</td>
+        <td class="num">{{ totals.paid|money }}</td>
+        <td class="num">{{ totals.due|money }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{% else %}
+<p class="empty">No registrations in this period.</p>
+{% endif %}

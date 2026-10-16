@@ -1,0 +1,47 @@
+{# Analyzer results, shown exactly as the analyzer sent them. Used on the
+   registration page and the printed report. #}
+{% macro machine_table(section, show_images=True, on_screen=False) %}
+<div class="machine-section">
+  <div class="machine-head">
+    <strong>{{ section.title }}</strong>
+    <span class="meta">{{ section.instrument }}{% if section.analyzed %} · analysed {{ section.analyzed|join(", ") }} (analyzer clock){% endif %}</span>
+  </div>
+  <table class="result-table">
+    <thead>
+      <tr>
+        <th>Test</th>
+        <th>Result</th>
+        <th>Unit</th>
+        <th>Reference range</th>
+        {% if on_screen %}<th></th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in section.rows %}
+      {% if row.group and (loop.first or row.group != section.rows[loop.index0 - 1].group) %}
+      <tr><td colspan="{{ 5 if on_screen else 4 }}" class="dept">{{ row.group }}</td></tr>
+      {% endif %}
+      <tr>
+        <td>{{ row.name or row.code }}{% if row.name and row.name != row.code %} <span class="meta">{{ row.code }}</span>{% endif %}</td>
+        <td class="{{ 'out-high' if row.flag == 'H' else 'out-low' if row.flag == 'L' else '' }}">
+          {{ row.value_text }}{% if row.flag == 'H' %} H{% elif row.flag == 'L' %} L{% endif %}
+        </td>
+        <td>{{ row.unit or "—" }}</td>
+        <td>{{ row.range_text or "—" }}</td>
+        {% if on_screen %}<td><a class="meta" href="{{ url_for('instrument_run', run_id=row.run_id) }}">received data</a></td>{% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if show_images and section.images %}
+  <div class="histograms">
+    {% for image in section.images %}
+    <figure>
+      <img src="{{ url_for('instrument_image', image_id=image.id) }}" alt="{{ image.name }} histogram">
+      <figcaption>{{ image.name }}</figcaption>
+    </figure>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}

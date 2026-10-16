@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Species collection · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head no-print">
+  <div>
+    <h1>MIS: species collection</h1>
+    <p class="lede">Registrations, tests, and amounts by species for the period.</p>
+  </div>
+  <button class="button" type="button" onclick="window.print()">Print</button>
+</section>
+
+<form class="filters no-print" method="get">
+  <label>Date from
+    <input type="date" name="from" value="{{ date_from }}">
+  </label>
+  <label>To
+    <input type="date" name="to" value="{{ date_to }}">
+  </label>
+  <button class="primary" type="submit">Show</button>
+</form>
+
+<article class="report-sheet">
+  <header class="report-banner">
+    <div>
+      <p class="report-kicker">MIS · Species collection</p>
+      <h1>{{ lab.lab_name }}</h1>
+      <p class="meta">{{ date_from }} to {{ date_to }}</p>
+    </div>
+  </header>
+  {% if rows %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Species</th>
+          <th class="num">Registrations</th>
+          <th class="num">Total no. of tests</th>
+          <th class="num">Gross (₹)</th>
+          <th class="num">Discount (₹)</th>
+          <th class="num">Net (₹)</th>
+          <th class="num">Received (₹)</th>
+          <th class="num">Due (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.species }}</td>
+          <td class="num">{{ row.count }}</td>
+          <td class="num">{{ row.tests }}</td>
+          <td class="num">{{ row.total|money }}</td>
+          <td class="num">{{ row.discount|money }}</td>
+          <td class="num">{{ row.net|money }}</td>
+          <td class="num">{{ row.paid|money }}</td>
+          <td class="num">{{ row.due|money }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="strong">
+          <td>Total</td>
+          <td class="num">{{ totals.count }}</td>
+          <td class="num">{{ totals.tests }}</td>
+          <td class="num">{{ totals.total|money }}</td>
+          <td class="num">{{ totals.discount|money }}</td>
+          <td class="num">{{ totals.net|money }}</td>
+          <td class="num">{{ totals.paid|money }}</td>
+          <td class="num">{{ totals.due|money }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No registrations in this period.</p>
+  {% endif %}
+</article>
+{% endblock %}

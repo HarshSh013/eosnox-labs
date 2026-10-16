@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Patients · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Patients</h1>
+    <p class="lede">Each animal keeps its species, owner contacts, referring doctor, and hospital. Use Register again for a repeat visit.</p>
+  </div>
+  <a class="button" href="{{ url_for('registration_new') }}">New registration</a>
+</section>
+
+<form class="filters" method="get">
+  <label>Search
+    <input name="q" value="{{ q }}" placeholder="Name, owner, mobile, email, doctor, hospital">
+  </label>
+  <label>Patient type
+    <select name="patient_type">
+      <option value="">All</option>
+      {% for name in patient_types %}
+      <option value="{{ name }}" {% if patient_type == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Species
+    <select name="species">
+      <option value="">All</option>
+      {% for name in species_options %}
+      <option value="{{ name }}" {% if species == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button class="primary" type="submit">Filter</button>
+</form>
+
+<section class="panel">
+  {% if patients %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Animal</th>
+          <th>Type / species</th>
+          <th>Owner</th>
+          <th>Mobile</th>
+          <th>Email</th>
+          <th>Referring doctor</th>
+          <th>Hospital</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for patient in patients %}
+        <tr>
+          <td><a href="{{ url_for('patient_edit', patient_id=patient.id) }}">{{ patient.animal_name }}</a></td>
+          <td>{{ patient.patient_type }} · {{ patient.species }}</td>
+          <td>{{ patient.owner_name or "—" }}</td>
+          <td>{{ patient.whatsapp_no or "—" }}</td>
+          <td>{{ patient.email or "—" }}</td>
+          <td>{{ patient.referring_doctor or "—" }}</td>
+          <td>{{ patient.hospital_name or "—" }}</td>
+          <td><a class="button secondary" href="{{ url_for('registration_new', patient_id=patient.id) }}">Register again</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No patients match this search.</p>
+  {% endif %}
+</section>
+{% endblock %}

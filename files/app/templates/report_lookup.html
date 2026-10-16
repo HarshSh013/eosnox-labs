@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Report by registration no. · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Report by registration no.</h1>
+    <p class="lede">Enter the full HR number to open the report, or part of it (or the patient name) to search.</p>
+  </div>
+</section>
+<form class="filters single" method="get">
+  <label>HR No. or patient name
+    <input name="hr" value="{{ hr }}" placeholder="HR-20261002-0001" autofocus>
+  </label>
+  <button class="primary" type="submit">Open report</button>
+</form>
+{% if hr %}
+<section class="panel">
+  {% if matches %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>HR No.</th><th>Date</th><th>Patient</th><th>Species</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for sample in matches %}
+        <tr>
+          <td>{{ sample.accession_no }}</td>
+          <td>{{ sample.collected_on }}</td>
+          <td>{{ sample.animal_name }}</td>
+          <td>{{ sample.species }}</td>
+          <td>{{ sample.status }}</td>
+          <td class="actions">
+            <a class="button" href="{{ url_for('sample_report', sample_id=sample.id) }}">Report</a>
+            <a class="button secondary" href="{{ url_for('sample_bill', sample_id=sample.id) }}">Bill</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No registration matches “{{ hr }}”.</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% from "_machine_results.html" import machine_table %}
+{% block title %}{{ sample.accession_no }} · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>HR No. {{ sample.accession_no }}</h1>
+    <p class="lede">{{ sample.animal_name }} · {{ sample.patient_type }} · {{ sample.species }}{% if sample.breed %} · {{ sample.breed }}{% endif %}</p>
+  </div>
+  <div class="actions">
+    <a class="button" href="{{ url_for('sample_report', sample_id=sample.id) }}">Open report</a>
+    <a class="button secondary" href="{{ url_for('sample_bill', sample_id=sample.id) }}">Print bill</a>
+    <a class="button secondary" href="{{ url_for('patient_edit', patient_id=sample.patient_id) }}">Patient</a>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="machine-title">
+    <h2>Analyzer results</h2>
+    <span class="badge">Read-only</span>
+  </div>
+  {% if machine_sections %}
+  <p class="meta">Received from the analyzers and printed as received. Values, units and ranges come from the analyzer and cannot be edited here.</p>
+  {% for section in machine_sections %}
+  {{ machine_table(section, show_images=True, on_screen=True) }}
+  {% endfor %}
+  {% else %}
+  <p class="empty">No analyzer results linked yet. Type <strong>{{ sample.accession_no }}</strong> as the H33 Patient No. or the 100plusV Patient Name and they link automatically{% if waiting_runs %}, or link one of the <a href="{{ url_for('instrument_inbox') }}">{{ waiting_runs }} unlinked result{{ "s" if waiting_runs != 1 }}</a> by hand{% endif %}.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Add a profile</h2>
+  <p class="meta">A profile adds every test set up for {{ sample.species }} and adds the profile rate to the bill.</p>
+  {% if panels %}
+  <form method="post" class="actions">
+    <input type="hidden" name="action" value="add_panel">
+    <label style="min-width: 16rem;">Profile
+      <select name="panel_id" required>
+        <option value="">Select</option>
+        {% for panel in panels %}
+        <option value="{{ panel.id }}">{{ panel.name }} · ₹ {{ panel.rate|money }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button class="primary" type="submit">Add profile</button>
+  </form>
+  {% else %}
+  <p class="empty">No profiles yet. <a href="{{ url_for('panel_new') }}">Create one</a>.</p>
+  {% endif %}
+</section>
+
+<section class="split">
+  <div class="panel">
+    <h2>Enter a result</h2>
+    <p class="meta">Ranges shown are the {{ sample.species }} intervals. A test from the list is added to the bill at its rate.</p>
+    <form method="post">
+      <input type="hidden" name="action" value="add_result">
+      <label>Test
+        <select name="test_code" id="test_code" required>
+          <option value="">Select</option>
+          {% for test in catalog %}
+          <option value="{{ test.test_code }}">{{ test.test_name }} ({{ test.test_code }}) · {{ test.low_value|rangelabel(test.high_value) }} {{ test.unit }}</option>
+          {% endfor %}
+          <option value="__MANUAL__">Other test</option>
+        </select>
+      </label>
+      <div class="form-grid manual" id="manual-test">
+        <label>Test code
+          <input name="manual_code" placeholder="CK">
+        </label>
+        <label>Test name
+          <input name="test_name">
+        </label>
+        <label>Unit
+          <input name="unit">
+        </label>
+        <label>Department
+          <input name="department">
+        </label>
+        <label>Low
+          <input name="low_value" inputmode="decimal">
+        </label>
+        <label>High
+          <input name="high_value" inputmode="decimal">
+        </label>
+      </div>
+      <div class="form-grid" style="margin-top: 0.8rem;">
+        <label>Result
+          <input name="value_text" required placeholder="42 or Positive">
+        </label>
+        <label>Comment
+          <input name="comment" placeholder="Hemolysis, repeat, etc.">
+        </label>
+      </div>
+      <div class="actions" style="margin-top: 0.8rem;">
+        <button class="primary" type="submit">Add result</button>
+      </div>
+    </form>
+  </div>
+  <aside class="panel">
+    <h2>Case</h2>
+    <p class="meta">Owner {{ sample.owner_name or "—" }}</p>
+    <p class="meta">{{ sample.sex or "Sex not set" }}{% if sample.age %} · {{ sample.age }} {{ sample.age_unit }}{% endif %}</p>
+    <p class="meta">Mobile {{ sample.whatsapp_no or "—" }}</p>
+    <p class="meta">Email {{ sample.email or "—" }}</p>
+    <p class="meta">Ref. doctor {{ sample.referring_doctor or "—" }}</p>
+    <p class="meta">Ref. hospital {{ sample.hospital_name or "—" }}</p>
+    <p class="meta">Registered {{ sample.collected_on }}</p>
+    {% if sample.clinical_notes %}<p>{{ sample.clinical_notes }}</p>{% endif %}
+    <form method="post" class="actions">
+      <input type="hidden" name="action" value="status">
+      <label style="flex:1">Status
+        <select name="status">
+          {% for name in statuses %}
+          <option value="{{ name }}" {% if sample.status == name %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button class="secondary" type="submit">Update</button>
+    </form>
+  </aside>
+</section>
+
+<section class="panel">
+  <h2>Results</h2>
+  {% if results %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Result</th>
+          <th>Normal range</th>
+          <th>Flag</th>
+          <th>Comment</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for result in results %}
+        <tr>
+          <td>{{ result.test_name }}<br><span class="meta">{{ result.test_code }}{% if result.panel_name %} · {{ result.panel_name }}{% endif %}</span></td>
+          <td>
+            {% if result.value_text %}
+            {{ result.value_text }} {{ result.unit or '' }}
+            {% else %}
+            <form method="post" class="inline-result">
+              <input type="hidden" name="action" value="save_result">
+              <input type="hidden" name="result_id" value="{{ result.id }}">
+              <input name="value_text" required placeholder="Result" aria-label="Result for {{ result.test_name }}">
+              <button class="secondary" type="submit">Save</button>
+            </form>
+            {% endif %}
+          </td>
+          <td>{{ result.low_value|rangelabel(result.high_value) }} {{ result.unit or '' }}</td>
+          <td>
+            {% if result.flag == 'H' %}<span class="badge high">High</span>
+            {% elif result.flag == 'L' %}<span class="badge low">Low</span>
+            {% elif result.flag == 'N' %}<span class="badge normal">Normal</span>
+            {% elif not result.value_text %}<span class="badge progress">Pending</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ result.comment or "" }}</td>
+          <td>
+            <form method="post" action="{{ url_for('result_delete', result_id=result.id) }}" onsubmit="return confirm('Remove this result?');">
+              <button class="warn" type="submit">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No results on this accession yet.</p>
+  {% endif %}
+</section>
+<section class="panel">
+  <div class="identity">
+    <h2>Billing</h2>
+    <span class="badge {{ 'normal' if bill.due <= 0 else 'progress' }}">{% if bill.due <= 0 %}Paid{% else %}Due ₹ {{ bill.due|money }}{% endif %}</span>
+  </div>
+  <div class="split">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Particulars</th><th>Type</th><th class="num">Amount (₹)</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for item in bill["items"] %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.item_type }}</td>
+            <td class="num">{{ item.amount|money }}</td>
+            <td>
+              <form method="post" onsubmit="return confirm('Remove this line from the bill?');">
+                <input type="hidden" name="action" value="remove_bill_item">
+                <input type="hidden" name="item_id" value="{{ item.id }}">
+                <button class="warn" type="submit">Remove</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="empty">Nothing billed.</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr><td colspan="2" class="num">Total</td><td class="num">{{ bill.total|money }}</td><td></td></tr>
+          <tr><td colspan="2" class="num">Discount</td><td class="num">{{ bill.discount|money }}</td><td></td></tr>
+          <tr class="strong"><td colspan="2" class="num">Net</td><td class="num">{{ bill.net|money }}</td><td></td></tr>
+          <tr><td colspan="2" class="num">Received</td><td class="num">{{ bill.paid|money }}</td><td></td></tr>
+          <tr class="strong"><td colspan="2" class="num">Due</td><td class="num">{{ bill.due|money }}</td><td></td></tr>
+        </tfoot>
+      </table>
+      {% if bill.payments %}
+      <p class="meta">Payments: {% for payment in bill.payments %}{{ payment.paid_on }} {{ payment.mode }} ₹ {{ payment.amount|money }}{% if not loop.last %}; {% endif %}{% endfor %}</p>
+      {% endif %}
+    </div>
+    <div>
+      {% if bill.due > 0 %}
+      <form method="post" class="form-grid">
+        <input type="hidden" name="action" value="payment">
+        <label>Receive payment (₹)
+          <input name="amount" value="{{ bill.due|trimnum }}" inputmode="decimal" required>
+        </label>
+        <label>Mode
+          <select name="mode">
+            {% for name in payment_modes %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
+          </select>
+        </label>
+        <div class="wide"><button class="primary" type="submit">Record payment</button></div>
+      </form>
+      {% endif %}
+      <form method="post" class="form-grid" style="margin-top: 0.8rem;">
+        <input type="hidden" name="action" value="discount">
+        <label>Discount (₹)
+          <input name="discount" value="{{ bill.discount|trimnum }}" inputmode="decimal">
+        </label>
+        <label>&nbsp;
+          <button class="secondary" type="submit">Update discount</button>
+        </label>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

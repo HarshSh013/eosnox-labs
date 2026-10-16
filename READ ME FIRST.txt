@@ -1,0 +1,45 @@
+EOSNOX LABS - WINDOWS SETUP
+===========================
+
+Laboratory software for Windows 10 (1809 or newer) and Windows 11, 64-bit.
+Receives results directly from the Unics H33 (hematology) and Unics 100plusV
+(chemistry) analyzers. No internet connection is needed to install.
+
+
+INSTALL (about 3 minutes)
+-------------------------
+1. Unzip this folder first: right-click the zip > Extract All > Extract.
+2. Double-click  "Install Eosnox Labs.bat".
+   If Windows says "Windows protected your PC": click More info > Run anyway.
+3. When Windows asks "Allow this app to make changes?" click Yes
+   (this adds one firewall rule so the H33 can send results).
+4. Open Eosnox Labs from the Desktop icon.
+   First sign-in:  user  admin   password  admin   (change it right away).
+
+
+THEN
+----
+Open  Help\Eosnox Labs Guide.html  (also in the Start menu after installing).
+It covers, step by step:
+  - first start (lab details, password, report header/footer)
+  - connecting the H33 and the 100plusV
+  - a worked first test run
+  - daily routine, results inbox, QC, backup, troubleshooting
+
+
+WHAT'S IN THIS FOLDER
+---------------------
+  Install Eosnox Labs.bat     installer (run this)
+  Uninstall Eosnox Labs.bat   removes the program; asks before touching data
+  Help\                       the guide
+  files\app\                  the program
+  files\wheels\               libraries (offline)
+  files\python\               official Python 3.12.10 installer from python.org
+  files\install.ps1, uninstall.ps1, requirements-windows.txt
+
+
+WHERE IT INSTALLS
+-----------------
+  Program:          %LOCALAPPDATA%\Programs\Eosnox Labs\app
+  Laboratory data:  %LOCALAPPDATA%\Programs\Eosnox Labs\data
+Installing again (or a newer version) keeps the laboratory data.

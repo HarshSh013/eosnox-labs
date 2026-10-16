@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Report by {{ info.singular|lower }} · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head no-print">
+  <div>
+    <h1>Report by {{ info.singular|lower }}</h1>
+    <p class="lede">Leave the name blank for a summary of every {{ info.singular|lower }} in the period.</p>
+  </div>
+  <button class="button" type="button" onclick="window.print()">Print</button>
+</section>
+
+<form class="filters no-print" method="get">
+  <label>{{ info.singular }}
+    <select name="name">
+      <option value="">All (summary)</option>
+      {% for option in names %}
+      <option value="{{ option }}" {% if option == name %}selected{% endif %}>{{ option }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>From
+    <input type="date" name="from" value="{{ date_from }}">
+  </label>
+  <label>To
+    <input type="date" name="to" value="{{ date_to }}">
+  </label>
+  <button class="primary" type="submit">Show</button>
+</form>
+
+<article class="report-sheet">
+  <header class="report-banner">
+    <div>
+      <p class="report-kicker">Report by {{ info.singular|lower }}</p>
+      <h1>{{ name or lab.lab_name }}</h1>
+      <p class="meta">{{ date_from }} to {{ date_to }}</p>
+    </div>
+  </header>
+  {% if name %}
+  {% include "_registration_table.html" %}
+  {% elif overview %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ info.singular }}</th>
+          <th class="num">Registrations</th>
+          <th class="num">Tests</th>
+          <th class="num">Net (₹)</th>
+          <th class="num">Received (₹)</th>
+          <th class="num">Due (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in overview %}
+        <tr>
+          <td>{% if row.name != 'Direct / none' %}<a href="{{ url_for('referral_report', kind=info.kind, name=row.name, **{'from': date_from, 'to': date_to}) }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</td>
+          <td class="num">{{ row.count }}</td>
+          <td class="num">{{ row.tests }}</td>
+          <td class="num">{{ row.net|money }}</td>
+          <td class="num">{{ row.paid|money }}</td>
+          <td class="num">{{ row.due|money }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="strong">
+          <td>Total</td>
+          <td class="num">{{ overview_totals.count }}</td>
+          <td class="num">{{ overview_totals.tests }}</td>
+          <td class="num">{{ overview_totals.net|money }}</td>
+          <td class="num">{{ overview_totals.paid|money }}</td>
+          <td class="num">{{ overview_totals.due|money }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No registrations in this period.</p>
+  {% endif %}
+</article>
+{% endblock %}

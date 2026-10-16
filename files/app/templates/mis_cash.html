@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Cash collection · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head no-print">
+  <div>
+    <h1>MIS: cash collection</h1>
+    <p class="lede">Tests and amounts billed for registrations in the period, and money received in the period by mode.</p>
+  </div>
+  <button class="button" type="button" onclick="window.print()">Print</button>
+</section>
+
+<form class="filters no-print" method="get">
+  <label>Date from
+    <input type="date" name="from" value="{{ date_from }}">
+  </label>
+  <label>To
+    <input type="date" name="to" value="{{ date_to }}">
+  </label>
+  <button class="primary" type="submit">Show</button>
+</form>
+
+<article class="report-sheet">
+  <header class="report-banner">
+    <div>
+      <p class="report-kicker">MIS · Cash collection</p>
+      <h1>{{ lab.lab_name }}</h1>
+      <p class="meta">{{ date_from }} to {{ date_to }}</p>
+    </div>
+  </header>
+  <section class="summary">
+    <article class="stat"><span>Total no. of tests</span><strong>{{ totals.tests }}</strong></article>
+    <article class="stat"><span>Registrations</span><strong>{{ totals.count }}</strong></article>
+    <article class="stat"><span>Gross (₹)</span><strong>{{ totals.total|money }}</strong></article>
+    <article class="stat"><span>Discount (₹)</span><strong>{{ totals.discount|money }}</strong></article>
+    <article class="stat"><span>Net amount (₹)</span><strong>{{ totals.net|money }}</strong></article>
+  </section>
+  <section class="summary">
+    {% for mode in modes %}
+    <article class="stat"><span>{{ mode.mode }} ({{ mode.count }})</span><strong>{{ mode.amount|money }}</strong></article>
+    {% endfor %}
+    <article class="stat"><span>Total received (₹)</span><strong>{{ collected|money }}</strong></article>
+    <article class="stat"><span>Still due on these (₹)</span><strong>{{ totals.due|money }}</strong></article>
+  </section>
+  {% if daily %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th class="num">Registrations</th>
+          <th class="num">Tests</th>
+          <th class="num">Net billed (₹)</th>
+          <th class="num">Cash (₹)</th>
+          <th class="num">UPI (₹)</th>
+          <th class="num">Received (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for day in daily %}
+        <tr>
+          <td>{{ day.day }}</td>
+          <td class="num">{{ day.registrations }}</td>
+          <td class="num">{{ day.tests }}</td>
+          <td class="num">{{ day.net|money }}</td>
+          <td class="num">{{ day.Cash|money }}</td>
+          <td class="num">{{ day.UPI|money }}</td>
+          <td class="num">{{ (day.Cash + day.UPI)|money }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">Nothing billed or received in this period.</p>
+  {% endif %}
+</article>
+{% endblock %}

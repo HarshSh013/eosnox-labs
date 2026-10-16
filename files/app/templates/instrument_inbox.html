@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Results inbox · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Results inbox</h1>
+    <p class="lede">Every result an analyzer sends lands here first. It links itself when the HR number was typed on the analyzer; otherwise pick the registration.</p>
+  </div>
+  <div class="actions">
+    <form method="post">
+      <input type="hidden" name="action" value="relink">
+      <button class="secondary" type="submit">Match again by HR no.</button>
+    </form>
+    <a class="button secondary" href="{{ url_for('instruments') }}">Instruments</a>
+  </div>
+</section>
+
+<nav class="filters">
+  {% for key, label in [("unlinked", "Waiting to link"), ("linked", "Linked"), ("all", "All")] %}
+  <a class="{{ 'button' if show == key else 'button secondary' }}" href="{{ url_for('instrument_inbox', show=key, instrument=instrument_code) }}">{{ label }}</a>
+  {% endfor %}
+  <span class="meta">·</span>
+  {% for code, label in [(None, "Both analyzers"), ("H33", "H33"), ("U100", "100plusV")] %}
+  <a class="{{ 'button' if instrument_code == code else 'button secondary' }}" href="{{ url_for('instrument_inbox', show=show, instrument=code) }}">{{ label }}</a>
+  {% endfor %}
+</nav>
+
+<datalist id="registrations">
+  {% for s in samples %}<option value="{{ s.accession_no }}">{{ s.animal_name }} · {{ s.species }} · {{ s.collected_on }}</option>{% endfor %}
+</datalist>
+
+<section class="panel">
+  {% if runs %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Analyzer</th>
+          <th>Analysed</th>
+          <th>Typed on analyzer</th>
+          <th>Results</th>
+          <th>Registration</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+        <tr>
+          <td><a href="{{ url_for('instrument_run', run_id=run.id) }}">{{ run.instrument_name }}</a><br>
+            <span class="meta">{{ "Sample" if run.instrument_code == "H33" else "Patient ID" }} {{ run.instrument_sample_id or "—" }}</span></td>
+          <td>{{ run.analyzed_at or "—" }}<br><span class="meta">received {{ run.received_at[5:16] }}</span></td>
+          <td>{% if run.patient_ref %}<strong>{{ run.patient_ref }}</strong>{% else %}<span class="meta">nothing typed</span>{% endif %}
+            {% if run.patient_name and run.patient_name != run.patient_ref %}<br><span class="meta">{{ run.patient_name }}</span>{% endif %}</td>
+          <td>
+            {% for v in run["values"][:6] %}<span class="chip {{ 'out-high' if v.flag == 'H' else 'out-low' if v.flag == 'L' else '' }}">{{ v.code }} {{ v.value_text }}</span>{% endfor %}
+            {% if run["values"]|length > 6 %}<span class="meta">+{{ run["values"]|length - 6 }} more</span>{% endif %}
+          </td>
+          <td>
+            {% if run.sample_id %}
+            <a href="{{ url_for('sample_detail', sample_id=run.sample_id) }}">{{ run.accession_no }}</a>
+            <span class="meta">{{ "auto" if run.link_method == "auto" else "by " ~ (run.linked_by or "staff") }}</span>
+            <form method="post" style="display:inline">
+              <input type="hidden" name="action" value="unlink">
+              <input type="hidden" name="run_id" value="{{ run.id }}">
+              <input type="hidden" name="next" value="{{ request.full_path }}">
+              <button class="link-button" type="submit">unlink</button>
+            </form>
+            {% else %}
+            {% if run.repeat_of %}
+            <p class="meta warn-text">Repeat: {{ run.match.accession_no }} already has this test from this analyzer
+              (<a href="{{ url_for('instrument_run', run_id=run.repeat_of.id) }}">run of {{ run.repeat_of.analyzed_at or "earlier" }}</a>).</p>
+            <form method="post" class="link-form">
+              <input type="hidden" name="action" value="link">
+              <input type="hidden" name="run_id" value="{{ run.id }}">
+              <input type="hidden" name="accession_no" value="{{ run.match.accession_no }}">
+              <input type="hidden" name="replace" value="1">
+              <input type="hidden" name="next" value="{{ request.full_path }}">
+              <button class="secondary" type="submit">Replace with this run</button>
+            </form>
+            {% endif %}
+            <form method="post" class="link-form">
+              <input type="hidden" name="action" value="link">
+              <input type="hidden" name="run_id" value="{{ run.id }}">
+              <input type="hidden" name="next" value="{{ request.full_path }}">
+              <input name="accession_no" list="registrations" placeholder="HR no." required aria-label="Registration for this result"
+                     value="{{ run.match.accession_no if run.match and not run.repeat_of else '' }}">
+              <button class="secondary" type="submit">Link</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">{% if show == "unlinked" %}Nothing waiting. Every result received is linked to a registration.{% else %}No results yet.{% endif %}</p>
+  {% endif %}
+</section>
+{% endblock %}

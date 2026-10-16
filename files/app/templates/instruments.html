@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Instruments · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+{% set h33 = instruments["H33"] %}
+{% set u100 = instruments["U100"] %}
+<section class="page-head">
+  <div>
+    <h1>Instruments</h1>
+    <p class="lede">Analyzers send results here on their own. Results are stored exactly as received and link to a registration by its HR number.</p>
+  </div>
+  <div class="actions">
+    <a class="button" href="{{ url_for('instrument_inbox') }}">Results inbox</a>
+    <a class="button secondary" href="{{ url_for('instrument_qc') }}">QC from analyzers</a>
+  </div>
+</section>
+
+{% if not running %}
+<div class="flash error">Receiving is not running in this window. Start the app with <code>python desktop.py</code> (or <code>python app.py</code>) to receive analyzer results.</div>
+{% endif %}
+
+<section class="split even">
+  {% for code, inst in [("H33", h33), ("U100", u100)] %}
+  {% set st = status[code] %}
+  {% set c = counts.get(code, {}) %}
+  <div class="panel instrument-card">
+    <div class="machine-title">
+      <h2>{{ inst.name }}</h2>
+      <span class="state state-{{ st.state }}" data-state="{{ code }}">{{ st.state|capitalize }}</span>
+    </div>
+    <p class="meta">{{ inst.model }} · {{ inst.department }}</p>
+    <p class="detail" data-detail="{{ code }}">{{ st.detail or "—" }}</p>
+    <p class="meta" data-checked="{{ code }}">{% if code == "U100" and st.last_poll %}Last read {{ st.last_poll[11:] }}{% endif %}</p>
+    <div class="mini-stats">
+      <div><span>Results stored</span><strong data-count="{{ code }}-total">{{ c.total or 0 }}</strong></div>
+      <div><span>Waiting to link</span><strong><a data-count="{{ code }}-unlinked" href="{{ url_for('instrument_inbox', instrument=code) }}">{{ c.unlinked or 0 }}</a></strong></div>
+      {% if code == "H33" %}<div><span>QC runs</span><strong><a data-count="{{ code }}-qc" href="{{ url_for('instrument_qc') }}">{{ c.qc or 0 }}</a></strong></div>{% endif %}
+      <div><span>Last received</span><strong data-count="{{ code }}-last_received">{{ (c.last_received or "—")[5:16] }}</strong></div>
+    </div>
+
+    <form method="post" class="form-grid">
+      <input type="hidden" name="action" value="save">
+      <input type="hidden" name="code" value="{{ code }}">
+      {% if code == "H33" %}
+      <label>Server address on this computer
+        <input name="host" value="{{ inst.host }}" required>
+      </label>
+      <label>Port
+        <input name="port" value="{{ inst.port }}" inputmode="numeric" required>
+      </label>
+      <p class="meta wide">Must match <strong>Server IP</strong> and <strong>Port Number</strong> on the H33 (Setup &gt; Ethernet Port Setup), with Auto Transmission on.</p>
+      {% else %}
+      <label>Analyzer address
+        <input name="host" value="{{ inst.host }}" required>
+      </label>
+      <label>User
+        <input name="username" value="{{ inst.username }}" required>
+      </label>
+      <label class="wide">Password {% if inst.has_password %}<span class="meta">(saved in the {{ "Windows Credential Manager" if windows else "macOS Keychain" }}; leave blank to keep)</span>{% else %}<span class="meta">(not saved yet)</span>{% endif %}
+        <input name="password" type="password" autocomplete="off" placeholder="{{ '••••••••' if inst.has_password else 'Analyzer password' }}">
+      </label>
+      <p class="meta wide">Reads result.xlsx and the test setup read-only every 30 s over SSH. SSH must be on at the analyzer. Next patient ID on the analyzer: <strong data-next="U100">{{ st.next_patient_id or "—" }}</strong></p>
+      {% endif %}
+      <label class="wide check"><input type="checkbox" name="enabled" value="1" {% if inst.enabled %}checked{% endif %}> Receive results from this analyzer</label>
+      <div class="wide actions">
+        <button class="primary" type="submit">Save</button>
+      </div>
+    </form>
+    {% if code == "U100" %}
+    <form method="post"><input type="hidden" name="action" value="poll"><button class="secondary" type="submit">Read now</button></form>
+    {% endif %}
+
+    {% if code == "H33" %}
+    <div class="address-check">
+      {% if h33_holder %}
+      <p class="meta">✓ {{ h33.host }} is on <strong>{{ h33_holder }}</strong>.</p>
+      {% else %}
+      <p class="meta warn-text">{{ h33.host }} is not on any adapter, so the H33 cannot reach this computer. Add it to the adapter cabled to the H33. {% if windows %}Windows asks for permission; the adapter keeps this fixed address after restarts.{% else %}macOS asks for the Mac password; it lasts until the adapter is unplugged or the Mac restarts.{% endif %}</p>
+      {% set wired = adapters|selectattr("active")|selectattr("cabled")|list %}
+      {% if wired %}
+      <form method="post" class="actions">
+        <input type="hidden" name="action" value="add_address">
+        <input type="hidden" name="ip" value="{{ h33.host }}">
+        <label style="min-width:14rem">Adapter cabled to the H33
+          <select name="device" required>
+            {% for a in wired %}
+            <option value="{{ a.device }}">{{ a.port }} ({{ a.device }})</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button class="secondary" type="submit">Add {{ h33.host }}</button>
+      </form>
+      {% else %}
+      <p class="meta">No cabled adapter is connected. Plug the Ethernet cable from the H33 into this computer, then reload this page.</p>
+      {% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  <h2>Network adapters on this computer</h2>
+  <p class="meta">Each analyzer is cabled to one of these. The H33 needs its server address on its adapter; the 100plusV is found by name on the network.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Adapter</th><th>Device</th><th>Status</th><th>Speed</th><th>Hardware address</th><th>IPv4 addresses</th></tr>
+      </thead>
+      <tbody>
+        {% for a in adapters %}
+        <tr>
+          <td>{{ a.port }}</td>
+          <td>{{ a.device }}</td>
+          <td>{% if a.active %}<span class="state state-connected">Connected</span>{% else %}<span class="meta">Not connected</span>{% endif %}</td>
+          <td class="meta">{{ a.media or "—" }}</td>
+          <td class="meta">{{ a.mac or "—" }}</td>
+          <td>
+            {% for ip, prefix in a.ipv4 %}
+            <div>{{ ip }}/{{ prefix }}
+              {% if ip == h33.host %}
+              <span class="badge">H33 server</span>
+              <form method="post" style="display:inline">
+                <input type="hidden" name="action" value="remove_address">
+                <input type="hidden" name="device" value="{{ a.device }}">
+                <input type="hidden" name="ip" value="{{ ip }}">
+                <button class="link-button" type="submit">remove</button>
+              </form>
+              {% elif ip.startswith("169.254.") %}<span class="meta">self-assigned</span>{% endif %}
+            </div>
+            {% else %}<span class="meta">—</span>{% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  // Fed every few seconds by the live check in base.html.
+  document.addEventListener("instruments-status", function (event) {
+    var data = event.detail;
+    Object.keys(data.status).forEach(function (code) {
+      var st = data.status[code];
+      var badge = document.querySelector('[data-state="' + code + '"]');
+      if (badge) { badge.textContent = st.state.charAt(0).toUpperCase() + st.state.slice(1); badge.className = "state state-" + st.state; }
+      var detail = document.querySelector('[data-detail="' + code + '"]');
+      if (detail) detail.textContent = st.detail || "—";
+      var next = document.querySelector('[data-next="' + code + '"]');
+      if (next && st.next_patient_id) next.textContent = st.next_patient_id;
+      var checked = document.querySelector('[data-checked="' + code + '"]');
+      if (checked) {
+        if (code === "U100" && st.last_poll) checked.textContent = "Last read " + st.last_poll.slice(11);
+        else if (code === "H33" && st.last_message) checked.textContent = "Last message " + st.last_message.slice(11);
+      }
+      var c = data.counts[code] || {};
+      ["total", "unlinked", "qc"].forEach(function (key) {
+        var el = document.querySelector('[data-count="' + code + "-" + key + '"]');
+        if (el) el.textContent = c[key] || 0;
+      });
+      var last = document.querySelector('[data-count="' + code + '-last_received"]');
+      if (last) last.textContent = c.last_received ? c.last_received.slice(5, 16) : "—";
+    });
+  });
+</script>
+{% endblock %}

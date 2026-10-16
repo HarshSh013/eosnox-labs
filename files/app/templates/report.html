@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% from "_machine_results.html" import machine_table %}
+{% block title %}Report {{ sample.accession_no }} · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head no-print">
+  <div>
+    <h1>Laboratory report</h1>
+    <p class="lede">{{ sample.accession_no }} for {{ sample.animal_name }}.</p>
+  </div>
+  <div class="actions">
+    <button class="button" type="button" onclick="window.print()">Print</button>
+    {% if whatsapp %}
+    <a class="button secondary" href="{{ whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>
+    {% endif %}
+    {% if email_link %}
+    <a class="button secondary" href="{{ email_link }}">Email</a>
+    {% endif %}
+    <a class="button secondary" href="{{ url_for('sample_detail', sample_id=sample.id) }}">Back to registration</a>
+  </div>
+</section>
+
+<article class="report-sheet">
+  <header class="report-banner">
+    <div>
+      <h1>{{ settings.lab_name }}</h1>
+      <p class="meta">{{ settings.lab_tagline }}</p>
+      {% if settings.lab_address %}<p class="meta">{{ settings.lab_address }}</p>{% endif %}
+      {% if settings.lab_phone or settings.lab_email %}
+      <p class="meta">{{ settings.lab_phone }}{% if settings.lab_phone and settings.lab_email %} · {% endif %}{{ settings.lab_email }}</p>
+      {% endif %}
+      {% if settings.report_header_note %}<p class="meta header-note">{{ settings.report_header_note }}</p>{% endif %}
+    </div>
+    <div class="banner-right">
+      <p class="report-kicker">Report</p>
+      <strong>HR No. {{ sample.accession_no }}</strong>
+      <p class="meta">Date {{ sample.collected_on }}</p>
+    </div>
+  </header>
+
+  <section class="facts">
+    <div><span>Patient name</span><strong>{{ sample.animal_name }}</strong></div>
+    <div><span>Age</span><strong>{% if sample.age %}{{ sample.age }} {{ sample.age_unit }}{% else %}—{% endif %}{% if sample.sex and sample.sex != 'Unknown' %} · {{ sample.sex }}{% endif %}</strong></div>
+    <div><span>Species</span><strong>{{ sample.species }}{% if sample.breed %} · {{ sample.breed }}{% endif %}</strong></div>
+    <div><span>Owner</span><strong>{{ sample.owner_name or "—" }}</strong></div>
+    <div><span>Ref. by doctor</span><strong>{{ sample.referring_doctor or "—" }}</strong></div>
+    <div><span>Ref. by hospital</span><strong>{{ sample.hospital_name or "—" }}</strong></div>
+  </section>
+
+  {% if sample.clinical_notes %}
+  <p><strong>Notes.</strong> {{ sample.clinical_notes }}</p>
+  {% endif %}
+
+  {% for section in machine_sections %}
+  {{ machine_table(section, show_images=settings.report_show_histograms == '1') }}
+  {% endfor %}
+
+  {% if results %}
+  {% if machine_sections %}<div class="machine-head"><strong>Other tests</strong></div>{% endif %}
+  <table class="result-table">
+    <thead>
+      <tr>
+        <th>S.No.</th>
+        <th>Test name</th>
+        <th>Result</th>
+        <th>Unit</th>
+        <th>Normal range</th>
+        <th>Interpretation</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+      {% if loop.first or result.section != results[loop.index0 - 1].section %}
+      <tr>
+        <td colspan="6" class="dept">{{ result.section }}</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ result.test_name }}</td>
+        <td class="{{ 'out-high' if result.flag == 'H' else 'out-low' if result.flag == 'L' else '' }}">
+          {% if result.value_text %}{{ result.value_text }}{% if result.flag == 'H' %} H{% elif result.flag == 'L' %} L{% endif %}{% else %}Pending{% endif %}
+          {% if result.comment %}<br><span class="meta">{{ result.comment }}</span>{% endif %}
+        </td>
+        <td>{{ result.unit or "—" }}</td>
+        <td>{{ result.low_value|rangelabel(result.high_value) }}</td>
+        <td class="interp">{{ result.interpretation or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% elif not machine_sections %}
+  <p class="empty">No results have been entered for this registration.</p>
+  {% endif %}
+  <p class="foot-note">H is above and L is below the reference range shown. Analyzer results print with the range set on that analyzer{% if results %}; other tests use this laboratory's {{ sample.species }} range{% endif %}.</p>
+  <div class="signatures">
+    <div><span class="sign-line"></span>{{ settings.report_sign_left or "Technician" }}</div>
+    <div><span class="sign-line"></span>{{ settings.report_sign_right or "Pathologist" }}</div>
+  </div>
+  {% if settings.report_footer %}<footer class="report-footer">{{ settings.report_footer }}</footer>{% endif %}
+</article>
+{% endblock %}

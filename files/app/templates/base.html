@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ lab.lab_name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,560;9..144,640&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar no-print">
+    <a class="brand" href="{{ url_for('dashboard') }}">
+      <span class="mark">{{ lab_initials }}</span>
+      <span>
+        <strong>{{ lab.lab_name }}</strong>
+        <small>Veterinary diagnostic laboratory</small>
+      </span>
+    </a>
+    <nav class="menu">
+      <a href="{{ url_for('dashboard') }}">Home</a>
+      <div class="menu-group">
+        <button type="button" class="menu-button">Registration</button>
+        <div class="menu-list">
+          <a href="{{ url_for('registration_new') }}">New patient registration</a>
+          <a href="{{ url_for('samples') }}">Registrations</a>
+          <a href="{{ url_for('patients') }}">Patients</a>
+        </div>
+      </div>
+      <div class="menu-group">
+        <button type="button" class="menu-button">Master</button>
+        <div class="menu-list">
+          <a href="{{ url_for('ranges') }}">Test creation</a>
+          <a href="{{ url_for('panels') }}">Profile creation</a>
+          <a href="{{ url_for('contacts', kind='doctors') }}">Referring doctor</a>
+          <a href="{{ url_for('contacts', kind='hospitals') }}">Referring hospital</a>
+          <hr>
+          <a href="{{ url_for('qc_list') }}">Quality control</a>
+          <a href="{{ url_for('settings') }}">Lab details &amp; password</a>
+        </div>
+      </div>
+      <div class="menu-group">
+        <button type="button" class="menu-button">Instruments <span class="count" data-nav-unlinked {% if not instrument_unlinked %}hidden{% endif %}>{{ instrument_unlinked }}</span></button>
+        <div class="menu-list">
+          <a href="{{ url_for('instrument_inbox') }}">Results inbox{% if instrument_unlinked %} ({{ instrument_unlinked }} to link){% endif %}</a>
+          <a href="{{ url_for('instrument_qc') }}">QC from analyzers</a>
+          <a href="{{ url_for('instruments') }}">Analyzers &amp; network</a>
+        </div>
+      </div>
+      <div class="menu-group">
+        <button type="button" class="menu-button">Reports</button>
+        <div class="menu-list">
+          <a href="{{ url_for('report_lookup') }}">Report by registration no.</a>
+          <a href="{{ url_for('collection_report', period='daily') }}">Daily report (collection)</a>
+          <a href="{{ url_for('collection_report', period='monthly') }}">Monthly report (collection)</a>
+          <a href="{{ url_for('collection_report', period='yearly') }}">Yearly report (collection)</a>
+          <a href="{{ url_for('referral_report', kind='doctors') }}">Report by ref. doctor</a>
+          <a href="{{ url_for('referral_report', kind='hospitals') }}">Report by ref. hospital</a>
+        </div>
+      </div>
+      <div class="menu-group">
+        <button type="button" class="menu-button">MIS</button>
+        <div class="menu-list">
+          <a href="{{ url_for('mis_cash') }}">Cash collection</a>
+          <a href="{{ url_for('mis_species') }}">Species collection</a>
+        </div>
+      </div>
+      <div class="menu-group">
+        <button type="button" class="menu-button">Help</button>
+        <div class="menu-list">
+          <a href="{{ url_for('about') }}">About</a>
+        </div>
+      </div>
+      {% if current_user %}
+      <form method="post" action="{{ url_for('logout') }}" class="logout">
+        <span>{{ current_user }}</span>
+        <button type="submit">Log out</button>
+      </form>
+      {% endif %}
+    </nav>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }} no-print">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <script>
+    document.querySelectorAll(".menu-group").forEach(function (group) {
+      group.querySelector(".menu-button").addEventListener("click", function (event) {
+        event.stopPropagation();
+        var open = group.classList.contains("open");
+        document.querySelectorAll(".menu-group.open").forEach(function (other) {
+          other.classList.remove("open");
+        });
+        group.classList.toggle("open", !open);
+      });
+    });
+    document.addEventListener("click", function () {
+      document.querySelectorAll(".menu-group.open").forEach(function (group) {
+        group.classList.remove("open");
+      });
+    });
+    document.querySelectorAll("[data-other-select]").forEach(function (select) {
+      var field = document.getElementById(select.dataset.otherSelect);
+      function sync() {
+        if (!field) return;
+        field.hidden = select.value !== "Other";
+      }
+      select.addEventListener("change", sync);
+      sync();
+    });
+    var manualToggle = document.getElementById("test_code");
+    var manualBox = document.getElementById("manual-test");
+    if (manualToggle && manualBox) {
+      function showManual() {
+        manualBox.classList.toggle("show", manualToggle.value === "__MANUAL__");
+      }
+      manualToggle.addEventListener("change", showManual);
+      showManual();
+    }
+    var catalogPick = document.getElementById("catalog-pick");
+    if (catalogPick) {
+      catalogPick.addEventListener("change", function () {
+        var parts = (catalogPick.value || "").split("|");
+        if (parts.length < 3) return;
+        document.getElementById("test_code_input").value = parts[0];
+        document.getElementById("test_name_input").value = parts[1];
+        document.getElementById("unit_input").value = parts[2];
+      });
+    }
+    {% if current_user %}
+    // Live analyzer updates: keep the menu count current and reload pages that
+    // list analyzer results when a new result arrives or one gets linked.
+    (function () {
+      var reloadOn = {{ (request.endpoint in ("instrument_inbox", "instrument_qc", "sample_detail", "instrument_run"))|tojson }};
+      var dirty = false, version = null;
+      document.addEventListener("input", function () { dirty = true; });
+      function check() {
+        fetch("{{ url_for('instruments_status') }}?t=" + Date.now(), { cache: "no-store" })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data) return;
+            var badge = document.querySelector("[data-nav-unlinked]");
+            if (badge) { badge.textContent = data.unlinked; badge.hidden = !data.unlinked; }
+            if (version !== null && data.version !== version && reloadOn && !dirty
+                && !document.activeElement.matches("input, textarea, select")) {
+              location.reload();
+              return;
+            }
+            version = data.version;
+            document.dispatchEvent(new CustomEvent("instruments-status", { detail: data }));
+          })
+          .catch(function () {});
+      }
+      check();
+      setInterval(check, 4000);
+    })();
+    {% endif %}
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

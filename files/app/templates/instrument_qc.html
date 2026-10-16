@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}QC from analyzers · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>QC from analyzers</h1>
+    <p class="lede">The H33 sends each QC run with its lot, level, expiry and target ± limit, but sends *** instead of the measured value. Use Record value to enter the value shown on the H33 into Quality control.</p>
+  </div>
+  <div class="actions">
+    <a class="button" href="{{ url_for('qc_list') }}">Quality control</a>
+    <a class="button secondary" href="{{ url_for('instruments') }}">Instruments</a>
+  </div>
+</section>
+
+{% for run in runs %}
+{% set h = run.header %}
+{% set level = "Level " ~ h.level if h.level in ("1", "2", "3") else "Level 1" %}
+<section class="panel">
+  <div class="machine-title">
+    <h2>QC file {{ h.qc_file }} · {{ "Level " ~ h.level if h.level else "no level" }} · lot {{ h.lot or "—" }}</h2>
+    {% if h.expiry and h.expiry < today %}<span class="badge warn">Expired {{ h.expiry }}</span>{% elif h.expiry %}<span class="badge">Expires {{ h.expiry }}</span>{% endif %}
+  </div>
+  <p class="meta">Run {{ run.analyzed_at or "—" }} (analyzer clock) · received {{ run.received_at }} · <a href="{{ url_for('instrument_run', run_id=run.id) }}">received data</a></p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Test</th><th>Sent value</th><th>Target ± limit</th><th>Unit</th><th></th></tr></thead>
+      <tbody>
+        {% for v in run["values"] %}
+        {% set extra = v.extra_json|fromjson %}
+        <tr>
+          <td>{{ v.name }} <span class="meta">{{ v.code }}</span></td>
+          <td class="meta">{{ v.value_text }}</td>
+          <td>{{ v.range_text or "No target set" }}</td>
+          <td>{{ v.unit }}</td>
+          <td>{% if extra.target is not none %}
+            <a class="button secondary small" href="{{ url_for('qc_new', test_code=v.code, test_name=v.name, control_level=level, lot_number=h.lot, instrument=run.instrument_name, unit=v.unit, expected_mean=extra.target, run_on=(run.analyzed_at or '')[:10], notes='H33 QC file ' ~ h.qc_file ~ ', run ' ~ run.analyzed_at ~ ', analyzer limit ± ' ~ extra.limit) }}">Record value</a>
+          {% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% else %}
+<section class="panel"><p class="empty">No QC runs received yet.</p></section>
+{% endfor %}
+{% endblock %}

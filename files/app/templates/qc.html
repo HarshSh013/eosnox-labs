@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}QC · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Quality control</h1>
+    <p class="lede">Each run compares the observed control with its mean and standard deviation. Within 2 SD is Accept, between 2 and 3 SD is Warning, beyond 3 SD is Reject.</p>
+  </div>
+  <div class="actions">
+    <a class="button" href="{{ url_for('qc_new') }}">Record QC</a>
+    <a class="button secondary" href="{{ url_for('qc_report') }}">QC report</a>
+  </div>
+</section>
+
+<form class="filters" method="get">
+  <label>Test
+    <select name="test">
+      <option value="">All</option>
+      {% for code in tests %}
+      <option value="{{ code }}" {% if test == code %}selected{% endif %}>{{ code }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Decision
+    <select name="status">
+      <option value="">All</option>
+      {% for name in ["Accept", "Warning", "Reject"] %}
+      <option value="{{ name }}" {% if status == name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button class="primary" type="submit">Filter</button>
+</form>
+
+<section class="panel">
+  {% if runs %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Test</th>
+          <th>Level</th>
+          <th>Observed</th>
+          <th>Mean ± SD</th>
+          <th>z</th>
+          <th>Decision</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+        <tr>
+          <td>{{ run.run_on }}</td>
+          <td>{{ run.test_name }}<br><span class="meta">{{ run.test_code }}{% if run.lot_number %} · lot {{ run.lot_number }}{% endif %}</span></td>
+          <td>{{ run.control_level }}</td>
+          <td>{{ run.observed_value|trimnum }} {{ run.unit or '' }}</td>
+          <td>{{ run.expected_mean|trimnum }} ± {{ run.expected_sd|trimnum }}</td>
+          <td>{{ run.z_score|trimnum }}</td>
+          <td><span class="badge {{ run.status|lower }}">{{ run.status }}</span></td>
+          <td>
+            <form method="post" action="{{ url_for('qc_delete', run_id=run.id) }}" onsubmit="return confirm('Remove this QC run?');">
+              <button class="warn" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No QC runs match this filter.</p>
+  {% endif %}
+</section>
+{% endblock %}

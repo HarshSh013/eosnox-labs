@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}About · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>About</h1>
+    <p class="lede">{{ lab.lab_name }} laboratory workstation.</p>
+  </div>
+</section>
+<section class="panel">
+  <h2>What this software does</h2>
+  <ul class="plain-list">
+    <li><strong>Registration</strong>: register the patient, select tests and profiles, apply a discount, take Cash or UPI (or leave it on Credit), and print the bill.</li>
+    <li><strong>Master</strong>: create tests with species normal range, unit, interpretation, and rate; group tests into profiles; keep referring doctors and hospitals.</li>
+    <li><strong>Reports</strong>: print a patient report by registration number, and collection reports by day, month, year, doctor, or hospital.</li>
+    <li><strong>MIS</strong>: cash collection by Cash and UPI, and business by species.</li>
+  </ul>
+  <p class="meta">Data is kept in a local database on this computer. Back up the database file regularly.</p>
+  {% if lab.lab_address or lab.lab_phone or lab.lab_email %}
+  <h2 style="margin-top: 1.2rem;">Laboratory</h2>
+  <p class="meta">{{ lab.lab_address }}</p>
+  <p class="meta">{{ lab.lab_phone }}{% if lab.lab_phone and lab.lab_email %} · {% endif %}{{ lab.lab_email }}</p>
+  {% endif %}
+</section>
+{% endblock %}

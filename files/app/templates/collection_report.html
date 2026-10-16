@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }} · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head no-print">
+  <div>
+    <h1>{{ heading }}</h1>
+    <p class="lede">Registrations billed in the period, and money actually received in the period by Cash and UPI (including dues paid for older registrations).</p>
+  </div>
+  <button class="button" type="button" onclick="window.print()">Print</button>
+</section>
+
+<form class="filters no-print" method="get">
+  {% if period == 'daily' %}
+  <label>Date
+    <input type="date" name="day" value="{{ day }}">
+  </label>
+  {% elif period == 'monthly' %}
+  <label>Month
+    <select name="month">
+      {% for number, name in months %}
+      <option value="{{ number }}" {% if number == month %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Year
+    <input name="year" type="number" value="{{ year }}" min="2000" max="2100">
+  </label>
+  {% else %}
+  <label>Year
+    <input name="year" type="number" value="{{ year }}" min="2000" max="2100">
+  </label>
+  {% endif %}
+  <button class="primary" type="submit">Show</button>
+</form>
+
+<article class="report-sheet">
+  <header class="report-banner">
+    <div>
+      <p class="report-kicker">{{ heading }}</p>
+      <h1>{{ lab.lab_name }}</h1>
+      <p class="meta">{{ label }}</p>
+    </div>
+  </header>
+  <section class="summary">
+    <article class="stat"><span>Registrations</span><strong>{{ totals.count }}</strong></article>
+    <article class="stat"><span>Tests</span><strong>{{ totals.tests }}</strong></article>
+    <article class="stat"><span>Net billed (₹)</span><strong>{{ totals.net|money }}</strong></article>
+    {% for mode in modes %}
+    <article class="stat"><span>{{ mode.mode }} received (₹)</span><strong>{{ mode.amount|money }}</strong></article>
+    {% endfor %}
+    <article class="stat"><span>Total received (₹)</span><strong>{{ collected|money }}</strong></article>
+  </section>
+  {% include "_registration_table.html" %}
+</article>
+{% endblock %}

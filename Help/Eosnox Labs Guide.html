@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eosnox Labs Guide</title>
+<style>
+  :root {
+    --paper: #f3efe4; --card: #fffdf8; --ink: #1c2420; --muted: #5e675f; --line: #d9d0c0;
+    --green: #1d5c45; --green-deep: #12382b; --moss: #e5f2eb;
+    --warn: #8a5a10; --warn-bg: #f8efd8; --high: #8d2b2b; --high-bg: #f8e8e4;
+    --code-bg: #efe9dc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #141a17; --card: #1b221e; --ink: #e8e4da; --muted: #a3aba3; --line: #33403a;
+      --green: #7cc4a4; --green-deep: #9fd8bd; --moss: #1f3029;
+      --warn: #e2b766; --warn-bg: #33291a; --high: #e79a8f; --high-bg: #3a2220; --code-bg: #232b27;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #141a17; --card: #1b221e; --ink: #e8e4da; --muted: #a3aba3; --line: #33403a;
+    --green: #7cc4a4; --green-deep: #9fd8bd; --moss: #1f3029;
+    --warn: #e2b766; --warn-bg: #33291a; --high: #e79a8f; --high-bg: #3a2220; --code-bg: #232b27;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink);
+         font: 16px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 16px 64px; display: grid;
+          grid-template-columns: 230px minmax(0, 1fr); gap: 32px; }
+  header.top { max-width: 980px; margin: 0 auto; padding: 40px 16px 24px; display: flex; gap: 16px; align-items: center; }
+  .mark { width: 52px; height: 52px; border-radius: 12px; background: #12382b; color: #f3efe4; display: grid;
+          place-items: center; font: 700 28px/1 Georgia, serif; flex: none; }
+  header.top h1 { margin: 0; font: 600 30px/1.2 Georgia, "Times New Roman", serif; }
+  header.top p { margin: 4px 0 0; color: var(--muted); }
+  nav.toc { position: sticky; top: 16px; align-self: start; font-size: 14px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  nav.toc li { counter-increment: s; }
+  nav.toc a { display: block; padding: 5px 8px; border-radius: 6px; color: var(--ink); text-decoration: none; }
+  nav.toc a::before { content: counter(s) ". "; color: var(--muted); }
+  nav.toc a:hover { background: var(--moss); }
+  main { min-width: 0; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px 28px; margin-bottom: 20px; }
+  h2 { margin: 0 0 12px; font: 600 23px/1.3 Georgia, "Times New Roman", serif; color: var(--green-deep); }
+  h3 { margin: 22px 0 8px; font-size: 17px; }
+  p, li { max-width: 70ch; }
+  ol.steps { padding-left: 0; list-style: none; counter-reset: step; }
+  ol.steps > li { counter-increment: step; position: relative; padding: 0 0 12px 40px; }
+  ol.steps > li::before { content: counter(step); position: absolute; left: 0; top: 1px; width: 26px; height: 26px;
+      border-radius: 50%; background: var(--green); color: var(--card); font-weight: 600; font-size: 14px;
+      display: grid; place-items: center; }
+  code, kbd { font-family: Consolas, "Cascadia Mono", Menlo, monospace; font-size: 0.92em; background: var(--code-bg);
+              padding: 1px 6px; border-radius: 5px; }
+  kbd { border: 1px solid var(--line); border-bottom-width: 2px; }
+  pre { background: var(--code-bg); padding: 12px 14px; border-radius: 8px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  .ui { font-weight: 600; }
+  .note, .warn, .tip { border-radius: 10px; padding: 12px 16px; margin: 14px 0; border-left: 4px solid; }
+  .note { background: var(--moss); border-color: var(--green); }
+  .warn { background: var(--warn-bg); border-color: var(--warn); }
+  .stop { background: var(--high-bg); border-color: var(--high); border-radius: 10px; padding: 12px 16px; margin: 14px 0; border-left: 4px solid; }
+  .note strong:first-child, .warn strong:first-child, .stop strong:first-child { display: block; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 15px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .table-wrap { overflow-x: auto; }
+  .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0 4px; }
+  .flow div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--paper); font-size: 14px; position: relative; }
+  .flow b { display: block; color: var(--green-deep); }
+  .flow div:not(:last-child)::after { content: "\2192"; position: absolute; right: -10px; top: 50%; transform: translate(50%, -50%);
+      color: var(--muted); font-size: 18px; z-index: 1; }
+  .example { border: 1px dashed var(--green); border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+  .example .label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--green); font-weight: 600; }
+  footer { color: var(--muted); font-size: 13px; text-align: center; margin-top: 24px; }
+  .theme { position: fixed; right: 16px; bottom: 16px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+           border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  @media (max-width: 760px) {
+    .wrap { grid-template-columns: 1fr; gap: 0; }
+    nav.toc { position: static; margin-bottom: 16px; }
+    section { padding: 18px 16px; }
+    .flow { grid-template-columns: 1fr 1fr; }
+    .flow div::after { display: none; }
+  }
+  @media print {
+    body { background: #fff; font-size: 11pt; }
+    nav.toc, .theme { display: none; }
+    .wrap { display: block; }
+    section { border: none; padding: 0; margin-bottom: 18px; break-inside: auto; }
+    h2 { break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="mark">E</div>
+  <div>
+    <h1>Eosnox Labs: installation and user guide</h1>
+    <p>Windows 10 / 11 · Unics H33 hematology analyzer · Unics 100plusV chemistry analyzer</p>
+  </div>
+</header>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li><a href="#overview">How it works</a></li>
+    <li><a href="#need">What you need</a></li>
+    <li><a href="#install">Install</a></li>
+    <li><a href="#first-start">First start</a></li>
+    <li><a href="#h33">Connect the H33</a></li>
+    <li><a href="#u100">Connect the 100plusV</a></li>
+    <li><a href="#first-run">First test run</a></li>
+    <li><a href="#daily">Daily routine</a></li>
+    <li><a href="#inbox">Results inbox</a></li>
+    <li><a href="#qc">Quality control</a></li>
+    <li><a href="#report">Report layout</a></li>
+    <li><a href="#rules">Rules that keep results safe</a></li>
+    <li><a href="#backup">Backup, update, uninstall</a></li>
+    <li><a href="#trouble">Troubleshooting</a></li>
+    <li><a href="#reference">Reference</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="overview">
+  <h2>How it works</h2>
+  <p>Eosnox Labs is the laboratory's desktop software: registration, test entry, billing, quality control and printed reports. It also receives results directly from two analyzers over network cables, so nobody re-types machine values.</p>
+  <div class="flow">
+    <div><b>Register</b>The animal gets an HR number, e.g. <code>HR-20261010-0001</code>.</div>
+    <div><b>Run on analyzer</b>Staff type that HR number on the analyzer as the patient.</div>
+    <div><b>Result arrives</b>Stored exactly as the analyzer sent it, and linked to the HR number.</div>
+    <div><b>Print</b>One report with the lab's own header, footer and signatures.</div>
+  </div>
+  <ul>
+    <li><strong>Unics H33</strong> (hematology / CBC) sends each result to the PC by itself, a few seconds after the run, with WBC, RBC and PLT histograms.</li>
+    <li><strong>Unics 100plusV</strong> (chemistry) keeps its results in its own file. The PC reads that file every 30 seconds. It only reads; nothing on the analyzer is changed.</li>
+    <li>Reference ranges and high/low flags come from each analyzer's own setup, not from the software.</li>
+  </ul>
+</section>
+
+<section id="need">
+  <h2>What you need</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Item</th><th>Details</th></tr>
+    <tr><td>PC</td><td>Windows 10 (version 1809 or newer) or Windows 11, 64-bit. About 500 MB free disk space.</td></tr>
+    <tr><td>Network ports</td><td>One Ethernet port per analyzer is recommended (two in total). A USB-to-Ethernet adapter works fine. Do not use the port that connects the PC to your office network or internet.</td></tr>
+    <tr><td>Cables</td><td>One Ethernet (LAN) cable from each analyzer to the PC.</td></tr>
+    <tr><td>Permission</td><td>You will be asked twice to allow changes (Windows "Yes/No" prompt): once while installing, once when connecting the H33.</td></tr>
+    <tr><td>Internet</td><td>Not needed. Everything the installer needs is in this folder.</td></tr>
+    <tr><td>Microsoft Edge WebView2</td><td>Already part of Windows 11 and most Windows 10 PCs. The installer checks it and tells you if it is missing.</td></tr>
+  </table></div>
+</section>
+
+<section id="install">
+  <h2>Install</h2>
+  <ol class="steps">
+    <li><strong>Unzip the folder.</strong> Right-click <code>Eosnox Labs - Windows Setup.zip</code> &rarr; <span class="ui">Extract All…</span> &rarr; <span class="ui">Extract</span>. Do not run the installer from inside the zip.</li>
+    <li><strong>Start the installer.</strong> In the extracted folder, double-click <code>Install Eosnox Labs.bat</code>.
+      <div class="note"><strong>If Windows shows "Windows protected your PC"</strong>Click <span class="ui">More info</span>, then <span class="ui">Run anyway</span>. This appears for any file copied from another computer.</div>
+    </li>
+    <li><strong>Let it run.</strong> A black window shows each step. If Python 3.12 is not on the PC, it is installed for you (about 1 minute). Then the program and its libraries are installed.</li>
+    <li><strong>Allow the firewall rule.</strong> Windows asks <em>"Do you want to allow this app to make changes to your device?"</em> Click <span class="ui">Yes</span>. This lets the H33 deliver results to this PC.</li>
+    <li><strong>Finish.</strong> The window ends with <em>"Eosnox Labs is installed."</em> Type <kbd>Y</kbd> and press <kbd>Enter</kbd> to open it now.</li>
+  </ol>
+  <p>The installer creates an <strong>Eosnox Labs</strong> icon on the Desktop and in the Start menu, plus <em>Eosnox Labs Guide</em> (this page) and <em>Uninstall Eosnox Labs</em> in the Start menu.</p>
+  <div class="example"><div class="label">Where things go</div>
+    Program: <code>%LOCALAPPDATA%\Programs\Eosnox Labs\app</code><br>
+    Laboratory data: <code>%LOCALAPPDATA%\Programs\Eosnox Labs\data</code><br>
+    (Paste either into the File Explorer address bar to open it.)
+  </div>
+</section>
+
+<section id="first-start">
+  <h2>First start</h2>
+  <ol class="steps">
+    <li><strong>Sign in</strong> with user <code>admin</code> and password <code>admin</code>.</li>
+    <li><strong>Change the password.</strong> Open <span class="ui">Master &rarr; Lab details &amp; password</span>, scroll to <span class="ui">Change password</span>, enter the current password <code>admin</code> and a new one, and save.</li>
+    <li><strong>Enter your laboratory details</strong> on the same page: name, tagline, address, phone, email. Click <span class="ui">Save details</span>. These print at the top of every report.</li>
+    <li><strong>Set the report layout</strong> (header note, footer, signature labels). See <a href="#report">Report layout</a>.</li>
+    <li><strong>Add your tests, profiles, referring doctors and hospitals</strong> under <span class="ui">Master</span>, as you need them.</li>
+  </ol>
+</section>
+
+<section id="h33">
+  <h2>Connect the H33</h2>
+  <p>The H33 sends its results to a fixed address, <code>192.168.19.104</code>, on port <code>8001</code>. The PC port it is cabled to must take that address. Eosnox Labs does this for you.</p>
+
+  <h3>On the H33</h3>
+  <ol class="steps">
+    <li>Open <span class="ui">Setup &rarr; Ethernet Port Setup</span>.</li>
+    <li>Set <span class="ui">Server IP</span> to <code>192.168.19.104</code> and <span class="ui">Port Number</span> to <code>8001</code>. Leave the H33's own IP as it is (for example <code>192.168.19.109</code>).</li>
+    <li>Turn <span class="ui">Auto Transmission</span> on, and save.</li>
+  </ol>
+
+  <h3>On the PC</h3>
+  <ol class="steps">
+    <li>Plug the Ethernet cable from the H33 into the PC port you have set aside for it. Turn the H33 on.</li>
+    <li>In Eosnox Labs open <span class="ui">Instruments &rarr; Analyzers &amp; network</span>.</li>
+    <li>On the <strong>Unics H33</strong> card you will see <em>"192.168.19.104 is not on any adapter"</em>. Under <span class="ui">Adapter cabled to the H33</span> choose the port the cable is in (for example <em>Ethernet 2</em>), then click <span class="ui">Add 192.168.19.104</span>.</li>
+    <li>Windows asks for permission. Click <span class="ui">Yes</span>. The card now shows <em>"✓ 192.168.19.104 is on Ethernet 2"</em> and the state changes to <strong>Waiting</strong>.</li>
+    <li>When the H33 connects, the state becomes <strong>Connected</strong>. It stays this way after restarts.</li>
+  </ol>
+  <div class="warn"><strong>That port now belongs to the analyzers</strong>The chosen port is given a fixed address, so it no longer works for the office network or internet. To give it back, click <span class="ui">remove</span> next to the H33 server address in the adapter table at the bottom of the page.</div>
+  <div class="note"><strong>If a Windows Firewall box appears</strong>("Windows Defender Firewall has blocked some features of this app") tick both <span class="ui">Private</span> and <span class="ui">Public</span> networks and click <span class="ui">Allow access</span>.</div>
+</section>
+
+<section id="u100">
+  <h2>Connect the 100plusV</h2>
+  <p>The 100plusV keeps results in its own file. Eosnox Labs signs in to the analyzer and reads that file every 30 seconds. The analyzer's remote sign-in ("SSH") must be switched on once.</p>
+
+  <h3>One-time: switch on SSH at the analyzer</h3>
+  <p>Do this once, preferably with your Unics service engineer. You need a USB keyboard plugged into the analyzer. The screen will not show what you type in step 2; type carefully.</p>
+  <ol class="steps">
+    <li>With the analyzer program running, press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F2</kbd> and wait 2 seconds.</li>
+    <li>Type the analyzer's user name (<code>pi</code>) and press <kbd>Enter</kbd>, then its password and press <kbd>Enter</kbd>.</li>
+    <li>Type <code>sudo systemctl enable --now ssh</code> and press <kbd>Enter</kbd> (type the password again if asked).</li>
+    <li>Press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F7</kbd> to go back to the analyzer program.</li>
+  </ol>
+  <div class="stop"><strong>Never change anything else on the analyzer</strong>Do not change its user name or password, and do not edit or delete its program files. Eosnox Labs only needs to read them.</div>
+
+  <h3>On the PC</h3>
+  <ol class="steps">
+    <li>Plug the Ethernet cable from the 100plusV into the second PC port. Leave that port on its normal (automatic) setting.</li>
+    <li>Open <span class="ui">Instruments &rarr; Analyzers &amp; network</span>. On the <strong>Unics 100plusV</strong> card:
+      <ul>
+        <li><span class="ui">Analyzer address</span>: <code>raspberrypi.local</code> (already filled in)</li>
+        <li><span class="ui">User</span>: <code>pi</code></li>
+        <li><span class="ui">Password</span>: the analyzer's password. It is saved in Windows Credential Manager, not in a file.</li>
+      </ul>
+    </li>
+    <li>Click <span class="ui">Save</span>, then <span class="ui">Read now</span>.</li>
+    <li>Within a few seconds the state becomes <strong>Connected</strong>, <em>"Results stored"</em> shows how many results the analyzer holds, and <em>"Next patient ID on the analyzer"</em> is filled in.</li>
+  </ol>
+  <div class="note"><strong>One port for both analyzers?</strong>It works through a small network switch, but one port per analyzer is more reliable. If you share a port, connect the H33 first (above). Windows then also keeps a self-assigned address on that port so the 100plusV stays reachable.</div>
+</section>
+
+<section id="first-run">
+  <h2>First test run: a worked example</h2>
+  <p>Do this once after setup to prove both analyzers deliver to the right animal.</p>
+
+  <h3>1. Register the animal</h3>
+  <div class="example"><div class="label">Example</div>
+    <span class="ui">Registration &rarr; New patient registration</span>: Patient name <em>Bruno</em>, Species <em>Dog</em>, Age <em>4 years</em>, Sex <em>Male</em>, Owner name <em>R. Mehta</em>. Select the tests (for example CBC and SGPT) and save.<br>
+    The registration gets the HR number <code>HR-20261010-0001</code>. Write it on the sample tube.
+  </div>
+
+  <h3>2. Run the CBC on the H33</h3>
+  <ol class="steps">
+    <li>On the H33 start a new sample. In <span class="ui">Patient No.</span> type the HR number <strong>without dashes</strong>: <code>HR202610100001</code>. The field holds only 15 characters, so the version with dashes gets cut off (that still matches, but it's better to type it without dashes).</li>
+    <li>Fill in name, species and so on if you like, and run the sample.</li>
+    <li>A few seconds after the H33 shows the result, open the registration (<span class="ui">Registration &rarr; Registrations</span> &rarr; <code>HR-20261010-0001</code>). Under <strong>Analyzer results</strong> you see the full CBC with the H33's own ranges, H/L flags and histograms.</li>
+  </ol>
+
+  <h3>3. Run SGPT on the 100plusV</h3>
+  <ol class="steps">
+    <li>On the 100plusV, enter the HR number in <span class="ui">Patient Name</span>: <code>HR-20261010-0001</code> (or <code>HR202610100001</code>).</li>
+    <li>Run SGPT.</li>
+    <li>Within 30 seconds SGPT appears in the same <strong>Analyzer results</strong> section, with the range from the 100plusV's test setup.</li>
+  </ol>
+
+  <h3>4. Print</h3>
+  <p>On the registration page click <span class="ui">Open report</span> and print it. The analyzer results print with your laboratory header, footer and signature labels, and the H33 histograms if that option is on.</p>
+
+  <div class="note"><strong>What counts as a match</strong>Dashes, spaces, upper/lower case, the "HR" letters and leading zeros in the last part are ignored. All of these link to <code>HR-20261010-0001</code>: <code>HR-20261010-0001</code>, <code>HR202610100001</code>, <code>hr 20261010 1</code>, <code>20261010-1</code>.</div>
+</section>
+
+<section id="daily">
+  <h2>Daily routine</h2>
+  <ol class="steps">
+    <li><strong>Start of day:</strong> turn on the analyzers, then open Eosnox Labs. Check <span class="ui">Instruments &rarr; Analyzers &amp; network</span>: the 100plusV shows <strong>Connected</strong>, the H33 shows <strong>Waiting</strong> or <strong>Connected</strong>.</li>
+    <li><strong>For each sample:</strong> register first, then type the HR number on the analyzer, then run.</li>
+    <li><strong>Check the inbox:</strong> the number next to <span class="ui">Instruments</span> in the menu is how many results are waiting to be linked. Clear them before reports go out (see <a href="#inbox">Results inbox</a>).</li>
+    <li><strong>Run QC</strong> as your lab requires and record the values (see <a href="#qc">Quality control</a>).</li>
+    <li><strong>End of day:</strong> close Eosnox Labs before switching off the PC. Back up the data folder regularly (see <a href="#backup">Backup</a>).</li>
+  </ol>
+  <p>Keep Eosnox Labs open while analyzers are running. H33 results sent while it is closed are not received. The 100plusV is not affected: its results are read when Eosnox Labs opens again.</p>
+</section>
+
+<section id="inbox">
+  <h2>Results inbox</h2>
+  <p><span class="ui">Instruments &rarr; Results inbox</span> lists analyzer results that are not linked to a registration yet. A result lands here when:</p>
+  <ul>
+    <li>nothing was typed on the analyzer, or the HR number was mistyped;</li>
+    <li>the result arrived before the registration was created. Click <span class="ui">Match again by HR no.</span> once it exists;</li>
+    <li>it is a <strong>repeat</strong>: the registration already has this test from this analyzer.</li>
+  </ul>
+  <h3>Link a result by hand</h3>
+  <p>Type or pick the HR number in the box on that row and click <span class="ui">Link</span>. To undo, use <span class="ui">unlink</span>. The result goes back to the inbox unchanged.</p>
+  <h3>Repeat runs</h3>
+  <p>A registration holds one result per test from each analyzer: one CBC from the H33, and one of each chemistry test from the 100plusV. When a test is run again, the new run waits in the inbox marked <em>"Repeat"</em> with a link to the earlier run.</p>
+  <ul>
+    <li><span class="ui">Replace with this run</span> uses the new run and sends the earlier one back to the inbox. Both keep their values exactly as received.</li>
+    <li>If the earlier run is the right one, leave the repeat in the inbox.</li>
+  </ul>
+</section>
+
+<section id="qc">
+  <h2>Quality control</h2>
+  <p>When you run QC on the H33, it sends the control's file number, lot, level, expiry and each parameter's target and limit. It does <strong>not</strong> send the measured QC values (they arrive as <code>***</code>). Record them from the H33 screen:</p>
+  <ol class="steps">
+    <li>Open <span class="ui">Instruments &rarr; QC from analyzers</span>. Each H33 QC run is listed with its lot, level and expiry.</li>
+    <li>Click <span class="ui">Record value</span> next to a parameter. The QC form opens with test, level, lot, analyzer and target already filled in.</li>
+    <li>Type the value shown on the H33 and save.</li>
+    <li><span class="ui">Master &rarr; Quality control</span> lists every QC run with its status against the lot's mean and SD: <strong>Accept</strong> within 2 SD, <strong>Warning</strong> between 2 and 3 SD, <strong>Reject</strong> beyond 3 SD. Investigate a rejected run before releasing patient results for that test.</li>
+  </ol>
+  <p>For the 100plusV and manual tests, record QC directly under <span class="ui">Master &rarr; Quality control</span>.</p>
+</section>
+
+<section id="report">
+  <h2>Report layout</h2>
+  <p><span class="ui">Master &rarr; Lab details &amp; password</span> &rarr; <span class="ui">Report layout</span>:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Setting</th><th>Prints</th><th>Example</th></tr>
+    <tr><td>Laboratory details</td><td>Report header</td><td>Name, tagline, address, phone, email</td></tr>
+    <tr><td>Header note</td><td>Line under the header</td><td>NABL-style accreditation or registration number</td></tr>
+    <tr><td>Footer</td><td>Bottom of every page</td><td>"Results relate only to the sample tested."</td></tr>
+    <tr><td>Left / right signature</td><td>Labels above the signature lines</td><td>"Lab Technician", "Veterinary Pathologist"</td></tr>
+    <tr><td>Print analyzer histograms</td><td>H33 WBC, RBC and PLT graphs</td><td>On or off</td></tr>
+  </table></div>
+  <p>Analyzer values always print exactly as the analyzer reported them, with the analyzer's own ranges and flags.</p>
+</section>
+
+<section id="rules">
+  <h2>Rules that keep results safe</h2>
+  <ul>
+    <li><strong>Analyzer results cannot be edited or deleted</strong>, by anyone, in any screen. The database itself refuses it. Only the link to a registration can change.</li>
+    <li><strong>Ranges come from the analyzer</strong> that produced the result, because the right range depends on that machine's setup.</li>
+    <li><strong>One result per test per analyzer</strong> on each registration. Repeats wait in the inbox until a person decides.</li>
+    <li><strong>The 100plusV is only read</strong>, never written to. Do not change its user name, password or program files.</li>
+    <li>Every raw message from the analyzers is also kept as a file in the data folder (<code>instrument_data\raw</code>).</li>
+  </ul>
+</section>
+
+<section id="backup">
+  <h2>Backup, update, uninstall</h2>
+  <h3>Backup</h3>
+  <ol class="steps">
+    <li>Close Eosnox Labs.</li>
+    <li>Copy the folder <code>%LOCALAPPDATA%\Programs\Eosnox Labs\data</code> to a USB drive or network share. Name the copy with the date.</li>
+  </ol>
+  <p>To restore, close Eosnox Labs and copy the saved <code>data</code> folder back to the same place.</p>
+  <h3>Update to a newer version</h3>
+  <p>Close Eosnox Labs, unzip the new setup folder and run <code>Install Eosnox Labs.bat</code> again. Your data, settings and analyzer setup are kept.</p>
+  <h3>Uninstall</h3>
+  <p>Start menu &rarr; <span class="ui">Eosnox Labs &rarr; Uninstall Eosnox Labs</span> (or <code>Uninstall Eosnox Labs.bat</code> in the setup folder). The laboratory data is kept unless you type <code>DELETE</code> when asked. Python 3.12 stays installed. Remove it under Windows <span class="ui">Settings &rarr; Apps</span> if nothing else uses it.</p>
+</section>
+
+<section id="trouble">
+  <h2>Troubleshooting</h2>
+  <div class="table-wrap"><table>
+    <tr><th>What you see</th><th>Likely cause</th><th>What to do</th></tr>
+    <tr><td>H33 card: <em>"192.168.19.104 is not on any adapter"</em></td><td>The H33's address was never added, or was removed.</td><td>Add it again: <a href="#h33">Connect the H33</a>, PC steps 2–4.</td></tr>
+    <tr><td>H33 card: <em>"Cannot listen on 192.168.19.104:8001 … in use"</em></td><td>Another program is using port 8001, or Eosnox Labs is open twice.</td><td>Close other copies and test programs, then reopen Eosnox Labs.</td></tr>
+    <tr><td>H33 stays <strong>Waiting</strong> after a run</td><td>Cable, H33 settings, or the firewall.</td><td>Check the cable and the H33's Server IP / Port / Auto Transmission. Run the installer again to re-add the firewall rule.</td></tr>
+    <tr><td>100plusV: <em>"wrong password"</em></td><td>Password not saved or mistyped.</td><td>Enter it in the 100plusV card and click Save.</td></tr>
+    <tr><td>100plusV: <em>"SSH is off on the analyzer"</em></td><td>SSH was switched off.</td><td>Repeat <a href="#u100">the one-time SSH step</a>.</td></tr>
+    <tr><td>100plusV: <em>"analyzer not on the network"</em> / <em>"Cannot find raspberrypi.local"</em></td><td>Analyzer off, cable out, or Windows cannot look up the name.</td><td>Check power and cable, then <span class="ui">Read now</span>. If it still fails, open Command Prompt, run <code>arp -a</code>, find the line whose physical address starts with <code>2c-cf-67</code>, <code>b8-27-eb</code>, <code>dc-a6-32</code>, <code>d8-3a-dd</code> or <code>e4-5f-01</code>, and enter that IP address as the <span class="ui">Analyzer address</span>.</td></tr>
+    <tr><td>100plusV: <em>"SSH key changed"</em></td><td>A different 100plusV unit (or a reinstalled one) is now connected.</td><td>If that is expected, delete the file <code>data\instrument_data\known_hosts</code> and click Read now.</td></tr>
+    <tr><td>100plusV: <em>"Connection to the analyzer dropped twice in a row"</em></td><td>Loose cable or the analyzer restarted.</td><td>Check the cable. It retries every 30 seconds.</td></tr>
+    <tr><td>Result not on the registration</td><td>HR number not typed, mistyped, or the test is a repeat.</td><td>Open the <a href="#inbox">Results inbox</a> and link it.</td></tr>
+    <tr><td>Dates on 100plusV results are wrong</td><td>The 100plusV's clock is wrong. It has no clock battery and resets when powered off.</td><td>Set the date in the analyzer's own settings each time it is switched on.</td></tr>
+    <tr><td>Eosnox Labs window is blank or does not open</td><td>Microsoft Edge WebView2 is missing.</td><td>Install it from <code>https://go.microsoft.com/fwlink/p/?LinkId=2124703</code>, then open Eosnox Labs.</td></tr>
+    <tr><td><em>"Eosnox Labs could not start"</em></td><td>See the message.</td><td>Send the file <code>data\logs\eosnox.log</code> to your support contact.</td></tr>
+    <tr><td><em>"Eosnox Labs is already open"</em></td><td>It is running in another window.</td><td>Use the open window (check the taskbar).</td></tr>
+  </table></div>
+</section>
+
+<section id="reference">
+  <h2>Reference</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Item</th><th>Value</th></tr>
+    <tr><td>H33 server address (on the PC)</td><td><code>192.168.19.104</code> / <code>255.255.255.0</code>, port <code>8001</code> (TCP, HL7 v2.3.1 over MLLP)</td></tr>
+    <tr><td>H33 typed patient field</td><td><span class="ui">Patient No.</span>, max 15 characters. Type the HR number without dashes.</td></tr>
+    <tr><td>100plusV address</td><td><code>raspberrypi.local</code> (or its IP), SSH port 22, user <code>pi</code></td></tr>
+    <tr><td>100plusV typed patient field</td><td><span class="ui">Patient Name</span></td></tr>
+    <tr><td>100plusV read interval</td><td>Every 30 seconds (or click <span class="ui">Read now</span>)</td></tr>
+    <tr><td>HR number format</td><td><code>HR-YYYYMMDD-NNNN</code>, e.g. <code>HR-20261010-0001</code></td></tr>
+    <tr><td>Program folder</td><td><code>%LOCALAPPDATA%\Programs\Eosnox Labs\app</code></td></tr>
+    <tr><td>Laboratory data</td><td><code>%LOCALAPPDATA%\Programs\Eosnox Labs\data</code> (database <code>vetlab.db</code>, raw analyzer messages, histograms, logs)</td></tr>
+    <tr><td>Firewall rule</td><td><em>Eosnox Labs - H33 results</em>: inbound TCP 8001</td></tr>
+    <tr><td>Saved 100plusV password</td><td>Windows Credential Manager, entry <em>VetLab Unics100plusV</em></td></tr>
+    <tr><td>First sign-in</td><td><code>admin</code> / <code>admin</code>. Change it on first use.</td></tr>
+  </table></div>
+</section>
+
+<footer>Eosnox Labs · Windows setup guide</footer>
+</main>
+</div>
+
+<button class="theme" type="button" id="theme">Dark / light</button>
+<script>
+  (function () {
+    var root = document.documentElement, key = "eosnox-guide-theme";
+    try { var saved = localStorage.getItem(key); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
+    document.getElementById("theme").addEventListener("click", function () {
+      var dark = root.getAttribute("data-theme") === "dark" ||
+        (!root.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      var next = dark ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      try { localStorage.setItem(key, next); } catch (e) {}
+    });
+  })();
+</script>
+</body>
+</html>

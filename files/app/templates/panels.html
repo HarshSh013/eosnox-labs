@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Profiles · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Profile creation</h1>
+    <p class="lede">A profile is a group of tests billed at one rate. On a registration, only the tests set up for that animal’s species are added.</p>
+  </div>
+  <a class="button" href="{{ url_for('panel_new') }}">Create profile</a>
+</section>
+
+{% if grouped %}
+{% for item in grouped %}
+<section class="panel">
+  <div class="identity">
+    <div>
+      <h2>{{ item.panel.name }}</h2>
+      <p class="meta">Rate ₹ {{ item.panel.rate|money }} · {{ item.panel.department or "General" }}{% if item.panel.notes %} · {{ item.panel.notes }}{% endif %}</p>
+    </div>
+    <div class="actions">
+      <a class="button secondary" href="{{ url_for('panel_edit', panel_id=item.panel.id) }}">Edit</a>
+      <form method="post" action="{{ url_for('panel_delete', panel_id=item.panel.id) }}" onsubmit="return confirm('Remove this profile?');">
+        <button class="warn" type="submit">Delete</button>
+      </form>
+    </div>
+  </div>
+  <p>
+    {% for test in item.tests %}
+    <span class="badge">{{ test.test_code }}{% if test.test_name %} · {{ test.test_name }}{% endif %}</span>
+    {% endfor %}
+  </p>
+</section>
+{% endfor %}
+{% else %}
+<section class="panel">
+  <p class="empty">No profiles yet.</p>
+</section>
+{% endif %}
+{% endblock %}

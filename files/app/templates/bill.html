@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Bill {{ sample.accession_no }} · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head no-print">
+  <div>
+    <h1>Bill</h1>
+    <p class="lede">{{ sample.accession_no }} for {{ sample.animal_name }}.</p>
+  </div>
+  <div class="actions">
+    <button class="button" type="button" onclick="window.print()">Print</button>
+    <a class="button secondary" href="{{ url_for('sample_detail', sample_id=sample.id) }}">Enter results</a>
+    <a class="button secondary" href="{{ url_for('registration_new') }}">Next registration</a>
+  </div>
+</section>
+
+<article class="report-sheet bill-sheet">
+  <header class="report-banner">
+    <div>
+      <h1>{{ lab.lab_name }}</h1>
+      {% if lab.lab_address %}<p class="meta">{{ lab.lab_address }}</p>{% endif %}
+      {% if lab.lab_phone or lab.lab_email %}
+      <p class="meta">{{ lab.lab_phone }}{% if lab.lab_phone and lab.lab_email %} · {% endif %}{{ lab.lab_email }}</p>
+      {% endif %}
+    </div>
+    <div class="banner-right">
+      <p class="report-kicker">Bill / receipt</p>
+      <strong>HR No. {{ sample.accession_no }}</strong>
+      <p class="meta">Date {{ sample.collected_on }}</p>
+    </div>
+  </header>
+
+  <section class="facts">
+    <div><span>Patient name</span><strong>{{ sample.animal_name }}</strong></div>
+    <div><span>Age / species</span><strong>{% if sample.age %}{{ sample.age }} {{ sample.age_unit }} · {% endif %}{{ sample.species }}</strong></div>
+    <div><span>Owner</span><strong>{{ sample.owner_name or "—" }}</strong></div>
+    <div><span>Mobile</span><strong>{{ sample.whatsapp_no or "—" }}</strong></div>
+    <div><span>Ref. by doctor</span><strong>{{ sample.referring_doctor or "—" }}</strong></div>
+    <div><span>Ref. by hospital</span><strong>{{ sample.hospital_name or "—" }}</strong></div>
+  </section>
+
+  <table>
+    <thead>
+      <tr>
+        <th>S.No.</th>
+        <th>Particulars</th>
+        <th>Type</th>
+        <th class="num">Amount (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in bill["items"] %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ item.name }}</td>
+        <td>{{ item.item_type }}</td>
+        <td class="num">{{ item.amount|money }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="empty">Nothing billed.</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td colspan="3" class="num">Total amount</td><td class="num">{{ bill.total|money }}</td></tr>
+      <tr><td colspan="3" class="num">Discount</td><td class="num">{{ bill.discount|money }}</td></tr>
+      <tr class="strong"><td colspan="3" class="num">Net amount</td><td class="num">{{ bill.net|money }}</td></tr>
+      <tr><td colspan="3" class="num">Received{% for payment in bill.payments %}{% if loop.first %} ({% endif %}{{ payment.mode }} {{ payment.amount|money }} on {{ payment.paid_on }}{% if not loop.last %}; {% else %}){% endif %}{% endfor %}</td><td class="num">{{ bill.paid|money }}</td></tr>
+      <tr class="strong"><td colspan="3" class="num">Due amount</td><td class="num">{{ bill.due|money }}</td></tr>
+    </tfoot>
+  </table>
+  <p class="meta">Payment mode at registration: {{ sample.payment_mode or "—" }}</p>
+  <div class="signatures">
+    <div></div>
+    <div><span class="sign-line"></span>Authorised signatory</div>
+  </div>
+</article>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Home · {{ lab.lab_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>{{ settings.lab_name }}</h1>
+    <p class="lede">{{ settings.lab_tagline }}. Register the patient and bill the tests, enter results, then print the report.</p>
+  </div>
+  <div class="actions">
+    <a class="button" href="{{ url_for('registration_new') }}">New registration</a>
+    <a class="button secondary" href="{{ url_for('report_lookup') }}">Find a report</a>
+  </div>
+</section>
+
+<section class="grid">
+  <article class="stat"><span>Registrations today</span><strong>{{ counts.today_registrations }}</strong></article>
+  <article class="stat"><span>Collected today (₹)</span><strong>{{ counts.today_collected|money }}</strong></article>
+  <article class="stat"><span>Results pending</span><strong>{{ counts.open_samples }}</strong></article>
+  <article class="stat"><span>Outstanding dues (₹)</span><strong>{{ counts.dues|money }}</strong></article>
+</section>
+
+<section class="panel">
+  <div class="identity">
+    <h2>Recent registrations</h2>
+    <a href="{{ url_for('samples') }}">All registrations</a>
+  </div>
+  {% if recent %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>HR No.</th>
+          <th>Patient</th>
+          <th>Type / species</th>
+          <th>Hospital</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sample in recent %}
+        <tr>
+          <td><a href="{{ url_for('sample_detail', sample_id=sample.id) }}">{{ sample.accession_no }}</a></td>
+          <td>{{ sample.animal_name }}</td>
+          <td>{{ sample.patient_type }} · {{ sample.species }}</td>
+          <td>{{ sample.hospital_name or "—" }}</td>
+          <td><span class="badge {{ 'reported' if sample.status == 'Reported' else 'progress' if sample.status == 'In progress' else '' }}">{{ sample.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No registrations yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
